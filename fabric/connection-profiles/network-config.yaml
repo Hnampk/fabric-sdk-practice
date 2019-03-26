@@ -86,6 +86,12 @@ channels:
         ledgerQuery: true
         eventSource: false
 
+      peer2.org2.example.com:
+        endorsingPeer: false
+        chaincodeQuery: true
+        ledgerQuery: true
+        eventSource: false
+
     # [Optional]. what chaincodes are expected to exist on this channel? The application can use
     # this information to validate that the target peers are in the expected state by comparing
     # this list with the query results of getInstalledChaincodes() and getInstantiatedChaincodes()
@@ -134,6 +140,7 @@ organizations:
     peers:
       - peer0.org2.example.com
       - peer1.org2.example.com
+      - peer2.org2.example.com
     certificateAuthorities:
       - ca-org2
     adminPrivateKey:
@@ -193,6 +200,14 @@ peers:
       ssl-target-name-override: peer1.org2.example.com
     tlsCACerts:
       path: ../fabric/crypto-config/peerOrganizations/org2.example.com/peers/peer1.org2.example.com/tls/ca.crt
+
+  peer2.org2.example.com:
+    url: grpcs://localhost:9051
+    eventUrl: grpcs://localhost:9053
+    grpcOptions:
+      ssl-target-name-override: peer2.org2.example.com
+    tlsCACerts:
+      path: ../fabric/crypto-config/peerOrganizations/org2.example.com/peers/peer2.org2.example.com/tls/ca.crt
 
 #
 # Fabric-CA is a special kind of Certificate Authority provided by Hyperledger Fabric which allows

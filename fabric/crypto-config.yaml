@@ -22,7 +22,7 @@ PeerOrgs:
        Hostname: ca
     
     Template:
-      Count: 2
+      Count: 3
       SANS:
         - "localhost"
     Users:

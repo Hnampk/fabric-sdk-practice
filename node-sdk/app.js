@@ -12,6 +12,7 @@ var instantiateChaincode = require('./app/instantiate-chaincode');
 var queryChaincode = require('./app/query.js');
 var invokeChaincode = require('./app/invoke.js');
 var updateAnchorPeers = require('./app/update-anchor-peers.js');
+var updateChannelConfig = require('./app/update-channel-config');
 
 // var helper = require('./raw-app/helper.js');
 // var createChannel = require('./raw-app/create-channel.js');
@@ -24,7 +25,22 @@ var updateAnchorPeers = require('./app/update-anchor-peers.js');
 
 
 
-
+/**
+ * Join peer mới của Org thành viên vào channel:
+ */
+async function joinNewPeer() {
+    /**
+     * TODO:
+     *  (1) Generate crypto config cho peer mới:
+     *      - Edit file crypto-config.yaml/PeerOrgs/<OrgName>/Template/Count ++
+     *      - chạy lệnh để generate: E.g. ../../bin/cryptogen extend --config=./crypto-config.yaml
+     *  (2) Tạo file docker compose cho container của peer mới (E.g. docker-compose-new-peer.yaml), chú ý ko trùng ports
+     *  (3) Khởi chạy container của peer mới theo file docker compose mới tạo với lệnh "docker-compose up"
+     *  (4) Edit file network-profiles/network-config.yaml: Thêm thông tin về peer mới
+     *  (5) Sử dụng SDK function join channel
+     */
+    await joinChannel.joinChannel("mychannel", ["peer2.org2.example.com"], "Org2", "Jim");
+}
 
 async function start() {
     // await installChaincode.installChaincode(["peer0.org1.example.com", "peer1.org1.example.com"], "another", "/src/github.com/example_cc/node", "v1", "node", "Org1", "Tom");
@@ -39,8 +55,14 @@ async function start() {
     // await installChaincode.installChaincode(["peer0.org1.example.com", "peer1.org1.example.com"], "mycc", "github.com/example_cc/go", "v0", "golang", "Org1", "Tom");
     // await installChaincode.installChaincode(["peer0.org2.example.com"], "mycc", "github.com/example_cc/go", "v0", "golang", "Org2", "Jim");
     // await instantiateChaincode.instantiateChaincode(["peer0.org1.example.com", "peer1.org1.example.com"], "mychannel", "mycc", "v0", "golang", "init", ["a", "100", "b", "200"], "Org1", "Tom");
-    await queryChaincode.queryChaincode(["peer0.org1.example.com","peer1.org1.example.com"], 'mycc', 'query', ['a'], 'mychannel', 'Org1', 'Tom');
+    // await queryChaincode.queryChaincode(["peer0.org1.example.com","peer1.org1.example.com"], 'mycc', 'query', ['a'], 'mychannel', 'Org1', 'Tom');
     // await invokeChaincode.invokeChaincode(["peer0.org1.example.com", "peer0.org2.example.com"], "mycc", "move", ["a", "b", "10"], "mychannel", "Org1", "Tom");
+
+    await joinNewPeer();
+
+    // await updateChannelConfig.modifyBatchSize('mychannel', 'Org1', 'Tom');
+
+
 
 
 
