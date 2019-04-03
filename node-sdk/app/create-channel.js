@@ -23,7 +23,6 @@ async function createChannel(channelName, channelConfigPath, orgName) {
     logger.debug('\n====== Creating Channel \'' + channelName + '\' ======\n');
 
     try {
-
         // (1) Thiết lập client của Org
         var client = await helper.getClientForOrg(orgName);
         logger.debug('Successfully got the fabric client for the organization "%s"', orgName);

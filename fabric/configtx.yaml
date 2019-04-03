@@ -91,7 +91,7 @@ Organizations:
                 Rule: "OR('Org2MSP.member')"
             Writers:
                 Type: Signature
-                Rule: "OR('Org2MSP.admin', 'Org2MSP.client')"
+                Rule: "OR('Org2MSP.member')"
             Admins:
                 Type: Signature
                 Rule: "OR('Org2MSP.admin')"

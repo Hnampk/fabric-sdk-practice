@@ -58,9 +58,9 @@ async function start() {
     // await queryChaincode.queryChaincode(["peer0.org1.example.com","peer1.org1.example.com"], 'mycc', 'query', ['a'], 'mychannel', 'Org1', 'Tom');
     // await invokeChaincode.invokeChaincode(["peer0.org1.example.com", "peer0.org2.example.com"], "mycc", "move", ["a", "b", "10"], "mychannel", "Org1", "Tom");
 
-    await joinNewPeer();
+    // await joinNewPeer();
 
-    // await updateChannelConfig.modifyBatchSize('mychannel', 'Org1', 'Tom');
+    await updateChannelConfig.modifyBatchSize(30, 'mychannel', 'Org1', 'Tom');
 
 
 
