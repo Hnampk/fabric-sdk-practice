@@ -22,17 +22,12 @@ async function getClientForOrg(orgName, username) {
      *  (4) Nếu gọi kèm username, thực hiện kiểm tra xem user đã đăng ký hay chưa
      *      và gắn vào client
      */
-
+    
     logger.debug('getClientForOrg - ****** START %s %s', orgName, username)
     let config = '-connection-profile-path';
 
     // (1) Tạo client dựa trên file network config
     let client = hfc.loadFromConfig(hfc.getConfigSetting("network" + config));
-
-    // console.log("configsetting", hfc.getConfigSetting("network" + config));
-    // console.log("client", client);
-    // console.log("orderer", client.getOrderer("orderer.example.com"));
-
 
     // (2) Load connection profile của phần client
     client.loadFromConfig(hfc.getConfigSetting(orgName + config));
@@ -55,6 +50,9 @@ async function getClientForOrg(orgName, username) {
     return client;
 }
 
+/**
+ * Set thông tin admin Orderer cho client 
+ */
 async function getOrdererAdmin(client) {
     const keyPath = path.join(__dirname, '../../fabric/crypto-config/ordererOrganizations/example.com/users/Admin@example.com/msp/keystore');
     const keyPEM = Buffer.from(readAllFiles(keyPath)[0]).toString();
@@ -74,32 +72,34 @@ async function getOrdererAdmin(client) {
     // }));
 }
 
-// async function getAdmin(client, userOrg) {
-//     let lowerOrgName = userOrg.toLowerCase();
-//     const keyPath = path.join(__dirname, util.format('../../fabric/crypto-config/peerOrganizations/%s.example.com/users/Admin@%s.example.com/msp/keystore', lowerOrgName, lowerOrgName));
-//     const keyPEM = Buffer.from(readAllFiles(keyPath)[0]).toString();
-//     const certPath = path.join(__dirname, util.format('../../fabric/crypto-config/peerOrganizations/%s.example.com/users/Admin@%s.example.com/msp/signcerts', lowerOrgName, lowerOrgName));
-//     const certPEM = readAllFiles(certPath)[0];
-    
-//     console.log(keyPEM.toString(), certPEM.toString());
+async function getAdmin(client, userOrg) {
+    let lowerOrgName = userOrg.toLowerCase();
+    const keyPath = path.join(__dirname, util.format('../../fabric/crypto-config/peerOrganizations/%s.example.com/users/Admin@%s.example.com/msp/keystore', lowerOrgName, lowerOrgName));
+    const keyPEM = Buffer.from(readAllFiles(keyPath)[0]).toString();
+    const certPath = path.join(__dirname, util.format('../../fabric/crypto-config/peerOrganizations/%s.example.com/users/Admin@%s.example.com/msp/signcerts', lowerOrgName, lowerOrgName));
+    const certPEM = readAllFiles(certPath)[0];
 
-//     const cryptoSuite = hfc.newCryptoSuite();
-//     if (userOrg) {
-//         cryptoSuite.setCryptoKeyStore(hfc.newCryptoKeyStore({
-//             path: "./fabric-client-kv-" + lowerOrgName
-//         }));
-//         client.setCryptoSuite(cryptoSuite);
-//     }
+    client.setAdminSigningIdentity(keyPEM.toString(), certPEM.toString(), userOrg + "MSP");
 
-//     return Promise.resolve(client.createUser({
-//         username: 'peer' + userOrg + 'Admin',
-//         mspid: userOrg + "MSP",
-//         cryptoContent: {
-//             privateKeyPEM: keyPEM.toString(),
-//             signedCertPEM: certPEM.toString()
-//         }
-//     }));
-// }
+    // console.log(keyPEM.toString(), certPEM.toString());
+
+    // const cryptoSuite = hfc.newCryptoSuite();
+    // if (userOrg) {
+    //     cryptoSuite.setCryptoKeyStore(hfc.newCryptoKeyStore({
+    //         path: "./fabric-client-kv-" + lowerOrgName
+    //     }));
+    //     client.setCryptoSuite(cryptoSuite);
+    // }
+
+    // return Promise.resolve(client.createUser({
+    //     username: 'peer' + userOrg + 'Admin',
+    //     mspid: userOrg + "MSP",
+    //     cryptoContent: {
+    //         privateKeyPEM: keyPEM.toString(),
+    //         signedCertPEM: certPEM.toString()
+    //     }
+    // }));
+}
 
 var getLogger = function (moduleName) {
     var logger = log4js.getLogger(moduleName);

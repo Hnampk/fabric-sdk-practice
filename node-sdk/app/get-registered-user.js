@@ -22,13 +22,11 @@ async function getRegisteredUser(username, orgName, isJson) {
      *  (5) Response lại thông tin user 
      */
 
-
     try {
 
         // (1) Thiết lập client của Org
         let client = await helper.getClientForOrg(orgName);
         logger.debug('Successfully initialized the credential stores');
-
         // (2) Kiểm tra thông tin user. Nếu chưa tồn tại, thực hiện tiếp các bước (3)(4) sau
         let user = await client.getUserContext(username, true);
         if (user && user.isEnrolled()) {
@@ -45,11 +43,25 @@ async function getRegisteredUser(username, orgName, isJson) {
 
             // (4) Dùng CA của Org thực hiện đăng ký cho user bằng user Admin
             let caClient = client.getCertificateAuthority();
+
+            // Kiểm tra sự tồn tại của affiliation (xem thêm tại: https://stackoverflow.com/a/48840929/7572711)
+            let affiliationService = caClient.newAffiliationService();
+            let registeredAffiliations = await affiliationService.getAll(adminUserObj);
+            if (!registeredAffiliations.result.affiliations.some(element => element.name == orgName.toLowerCase())) {
+                let affiliation = orgName.toLowerCase() + '.department1';
+                await affiliationService.create({
+                    name: affiliation,
+                    force: true
+                }, adminUserObj);
+            }
+
+            // Đăng ký cho user
             let secret = await caClient.register({
                 enrollmentID: username,
                 affiliation: orgName.toLowerCase() + '.department1'
             }, adminUserObj);
 
+            console.log("=========================================!!!", caClient)
             logger.debug('Successfully got the secret for user %s', username);
             user = await client.setUserContext({
                 username: username,
