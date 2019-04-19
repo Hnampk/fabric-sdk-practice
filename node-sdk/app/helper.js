@@ -26,7 +26,7 @@ async function getClientForOrg(orgName, username) {
     logger.debug('getClientForOrg - ****** START %s %s', orgName, username)
     let config = '-connection-profile-path';
 
-    // (1) Tạo client dựa trên file network config
+    // (1) Tạo client dựa trên file network config, được set trong file config.js
     let client = hfc.loadFromConfig(hfc.getConfigSetting("network" + config));
 
     // (2) Load connection profile của phần client
@@ -106,7 +106,6 @@ var getLogger = function (moduleName) {
     logger.setLevel('DEBUG');
     return logger;
 };
-
 
 function readAllFiles(dir) {
     const files = fs.readdirSync(dir);

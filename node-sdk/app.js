@@ -9,11 +9,12 @@ var getRegisteredUser = require('./app/get-registered-user.js');
 var joinChannel = require('./app/join-channel.js');
 var installChaincode = require('./app/install-chaincode.js');
 var instantiateChaincode = require('./app/instantiate-chaincode');
-var queryChaincode = require('./app/query.js');
+var query = require('./app/query.js');
 var invokeChaincode = require('./app/invoke.js');
 var updateAnchorPeers = require('./app/update-anchor-peers.js');
 var updateChannelConfig = require('./app/update-channel-config');
 var addNewOrg = require('./app/add-new-org.js');
+var utils = require('./app/utils.js');
 
 // var helper = require('./raw-app/helper.js');
 // var createChannel = require('./raw-app/create-channel.js');
@@ -66,7 +67,7 @@ async function start() {
     // await installChaincode.installChaincode(["peer0.org1.example.com", "peer1.org1.example.com"], "mycc", "github.com/example_cc/go", "v0", "golang", "Org1", "Tom");
     // await installChaincode.installChaincode(["peer0.org2.example.com"], "mycc", "github.com/example_cc/go", "v0", "golang", "Org2", "Jim");
     // await instantiateChaincode.instantiateChaincode(["peer0.org1.example.com", "peer1.org1.example.com"], "mychannel", "mycc", "v0", "golang", "init", ["a", "100", "b", "200"], "Org1", "Tom");
-    // await queryChaincode.queryChaincode(["peer0.org1.example.com","peer1.org1.example.com"], 'mycc', 'query', ['a'], 'mychannel', 'Org1', 'Tom');
+    // await query.queryChaincode(["peer0.org1.example.com","peer1.org1.example.com"], 'mycc', 'query', ['a'], 'mychannel', 'Org1', 'Tom');
     // await invokeChaincode.invokeChaincode(["peer0.org1.example.com", "peer0.org2.example.com"], "mycc", "move", ["a", "b", "10"], "mychannel", "Org1", "Tom");
 
     /**
@@ -80,7 +81,7 @@ async function start() {
      */
     // await updateChannelConfig.modifyBatchSize(20, 'mychannel', 'Org1', 'Tom');
 
-    
+
     /**
      * Add new Org into network
      *  (1) Chuẩn bị các file cấu hình
@@ -93,10 +94,21 @@ async function start() {
      *  (5) Join các peer vào channel
      *  (6) Cài đặt và upgrade chaincode (Optional)
      */
-    await addNewOrg.addNewOrg('Org3', 'mychannel', 'Org1', 'Tom');
-    await getRegisteredUser.getRegisteredUser("Alex", "Org3", true);
-    await joinChannel.joinChannel("mychannel", ["peer0.org3.example.com", "peer1.org3.example.com"], "Org3", "Alex");
+    // await addNewOrg.addNewOrg('Org3', 'mychannel', 'Org1', 'Tom');
+    // await getRegisteredUser.getRegisteredUser("Alex", "Org3", true);
+    // await joinChannel.joinChannel("mychannel", ["peer0.org3.example.com", "peer1.org3.example.com"], "Org3", "Alex");
 
+
+
+    // await query.queryInfo("peer0.org1.example.com", "mychannel", "Org1", "Tom");
+    // await query.queryBlockByHash("peer0.org1.example.com", "8243d533b8da74812e3adbd116cfd6ca16b0ddbdd2ecb97af1a4aa009f7cae0b", "mychannel", "Org1", "Tom");
+    // await query.getPeers("mychannel", "Org1", "Tom");
+
+    try {
+        let blockList = await query.getBlockList(-1, 10, "peer0.org1.example.com", "mychannel", "Org1", "Tom");
+    } catch (err) {
+        console.log("ERROR: ", err);
+    }
 }
 
 start();

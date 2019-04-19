@@ -87,24 +87,24 @@ channels:
         eventSource: false
 
       # New peer
-      peer2.org2.example.com:
-        endorsingPeer: false
-        chaincodeQuery: true
-        ledgerQuery: true
-        eventSource: false
+      # peer2.org2.example.com:
+      #   endorsingPeer: false
+      #   chaincodeQuery: true
+      #   ledgerQuery: true
+      #   eventSource: false
 
       # New Org's peers
-      peer0.org3.example.com:
-        endorsingPeer: true
-        chaincodeQuery: true
-        ledgerQuery: true
-        eventSource: true
+      # peer0.org3.example.com:
+      #   endorsingPeer: true
+      #   chaincodeQuery: true
+      #   ledgerQuery: true
+      #   eventSource: true
 
-      peer1.org3.example.com:
-        endorsingPeer: false
-        chaincodeQuery: true
-        ledgerQuery: true
-        eventSource: false
+      # peer1.org3.example.com:
+      #   endorsingPeer: false
+      #   chaincodeQuery: true
+      #   ledgerQuery: true
+      #   eventSource: false
 
     # [Optional]. what chaincodes are expected to exist on this channel? The application can use
     # this information to validate that the target peers are in the expected state by comparing
@@ -167,18 +167,18 @@ organizations:
   # peers with a public URL to send transaction proposals. The file will not contain private
   # information reserved for members of the organization, such as admin key and certificate,
   # fabric-ca registrar enroll ID and secret, etc.
-  Org3:
-    mspid: Org3MSP
-    peers:
-      - peer0.org3.example.com
-      - peer1.org3.example.com
-      - peer2.org3.example.com
-    certificateAuthorities:
-      - ca-org3
-    adminPrivateKey:
-      path: ../fabric/org3-artifacts/crypto-config/peerOrganizations/org3.example.com/users/Admin@org3.example.com/msp/keystore/key.pem
-    signedCert:
-      path: ../fabric/org3-artifacts/crypto-config/peerOrganizations/org3.example.com/users/Admin@org3.example.com/msp/signcerts/Admin@org3.example.com-cert.pem
+  # Org3:
+  #   mspid: Org3MSP
+  #   peers:
+  #     - peer0.org3.example.com
+  #     - peer1.org3.example.com
+  #     - peer2.org3.example.com
+  #   certificateAuthorities:
+  #     - ca-org3
+  #   adminPrivateKey:
+  #     path: ../fabric/org3-artifacts/crypto-config/peerOrganizations/org3.example.com/users/Admin@org3.example.com/msp/keystore/key.pem
+  #   signedCert:
+  #     path: ../fabric/org3-artifacts/crypto-config/peerOrganizations/org3.example.com/users/Admin@org3.example.com/msp/signcerts/Admin@org3.example.com-cert.pem
 
 #
 # List of orderers to send transaction and channel create/update requests to. For the time
@@ -233,27 +233,27 @@ peers:
     tlsCACerts:
       path: ../fabric/crypto-config/peerOrganizations/org2.example.com/peers/peer1.org2.example.com/tls/ca.crt
 
-  peer2.org2.example.com:
-    url: grpcs://localhost:9051
-    eventUrl: grpcs://localhost:9053
-    grpcOptions:
-      ssl-target-name-override: peer2.org2.example.com
-    tlsCACerts:
-      path: ../fabric/crypto-config/peerOrganizations/org2.example.com/peers/peer2.org2.example.com/tls/ca.crt
+  # peer2.org2.example.com:
+  #   url: grpcs://localhost:9051
+  #   eventUrl: grpcs://localhost:9053
+  #   grpcOptions:
+  #     ssl-target-name-override: peer2.org2.example.com
+  #   tlsCACerts:
+  #     path: ../fabric/crypto-config/peerOrganizations/org2.example.com/peers/peer2.org2.example.com/tls/ca.crt
 
-  peer0.org3.example.com:
-    url: grpcs://localhost:11051
-    grpcOptions:
-      ssl-target-name-override: peer0.org3.example.com
-    tlsCACerts:
-      path: ../fabric/org3-artifacts/crypto-config/peerOrganizations/org3.example.com/peers/peer0.org3.example.com/tls/ca.crt
+  # peer0.org3.example.com:
+  #   url: grpcs://localhost:11051
+  #   grpcOptions:
+  #     ssl-target-name-override: peer0.org3.example.com
+  #   tlsCACerts:
+  #     path: ../fabric/org3-artifacts/crypto-config/peerOrganizations/org3.example.com/peers/peer0.org3.example.com/tls/ca.crt
 
-  peer1.org3.example.com:
-    url: grpcs://localhost:12051
-    grpcOptions:
-      ssl-target-name-override: peer1.org3.example.com
-    tlsCACerts:
-      path: ../fabric/org3-artifacts/crypto-config/peerOrganizations/org3.example.com/peers/peer1.org3.example.com/tls/ca.crt
+  # peer1.org3.example.com:
+  #   url: grpcs://localhost:12051
+  #   grpcOptions:
+  #     ssl-target-name-override: peer1.org3.example.com
+  #   tlsCACerts:
+  #     path: ../fabric/org3-artifacts/crypto-config/peerOrganizations/org3.example.com/peers/peer1.org3.example.com/tls/ca.crt
 
 #
 # Fabric-CA is a special kind of Certificate Authority provided by Hyperledger Fabric which allows
@@ -290,14 +290,14 @@ certificateAuthorities:
     # [Optional] The optional name of the CA.
     caName: ca-org2
 
-  ca-org3:
-    url: https://localhost:9054
-    httpOptions:
-      verify: false
-    tlsCACerts:
-      path: ../fabric/org3-artifacts/crypto-config/peerOrganizations/org3.example.com/ca/ca.org3.example.com-cert.pem
-    registrar:
-      - enrollId: admin
-        enrollSecret: adminpw
-    # [Optional] The optional name of the CA.
-    caName: ca-org3
+  # ca-org3:
+  #   url: https://localhost:9054
+  #   httpOptions:
+  #     verify: false
+  #   tlsCACerts:
+  #     path: ../fabric/org3-artifacts/crypto-config/peerOrganizations/org3.example.com/ca/ca.org3.example.com-cert.pem
+  #   registrar:
+  #     - enrollId: admin
+  #       enrollSecret: adminpw
+  #   # [Optional] The optional name of the CA.
+  #   caName: ca-org3

@@ -10,7 +10,6 @@ const requester = require('request');
 
 var helper = require('./helper.js');
 var logger = helper.getLogger('Update-channel-config');
-var decoder = hfc.BlockDecoder;
 
 /**
  * Cập nhật số  transaction tối đa bên trong 01 block
