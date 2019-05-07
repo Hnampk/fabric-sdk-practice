@@ -23,7 +23,7 @@ async function getRegisteredUser(username, orgName, isJson) {
      */
 
     try {
-
+        let response = "";
         // (1) Thiết lập client của Org
         let client = await helper.getClientForOrg(orgName);
         logger.debug('Successfully initialized the credential stores');
@@ -31,6 +31,13 @@ async function getRegisteredUser(username, orgName, isJson) {
         let user = await client.getUserContext(username, true);
         if (user && user.isEnrolled()) {
             logger.info('Successfully loaded member from persistence');
+            response = {
+                success: true,
+                username: username,
+                orgName: orgName,
+                secret: user._enrollmentSecret,
+                message: username + ' is already enrolled!'
+            };
         } else {
             logger.info('User %s was not enrolled, so we will need an admin user object to register', username);
 
@@ -67,17 +74,21 @@ async function getRegisteredUser(username, orgName, isJson) {
                 username: username,
                 password: secret
             });
+
+            // https://gerrit.hyperledger.org/r/#/c/19953/
+            user._enrollmentSecret = secret;
             logger.debug('Successfully enrolled username %s  and setUserContext on the client object', username);
 
             // (5) Response lại thông tin user 
             if (user && user.isEnrolled()) {
                 if (isJson && isJson === true) {
-                    let response = {
+                    response = {
                         success: true,
+                        username: username,
+                        orgName: orgName,
                         secret: user._enrollmentSecret,
                         message: username + ' enrolled Successfully'
                     };
-                    return response;
                 } else {
 
                 }
@@ -85,6 +96,8 @@ async function getRegisteredUser(username, orgName, isJson) {
                 throw new Error('User was not enrolled ')
             }
         }
+        console.log("response: ", response);
+        return response;
     } catch (err) {
         logger.error('Failed to get registered user: %s with error: %s', username, err.toString());
         return 'failed ' + error.toString();

@@ -1,114 +1,188 @@
-'user strict';
-var hfc = require('fabric-client');
-var path = require('path');
-var fs = require('fs');
+'use strict';
+var log4js = require('log4js');
+var logger = log4js.getLogger('SampleWebApp');
+var express = require('express');
+var bodyParser = require('body-parser');
+var http = require('http');
+var util = require('util');
+var app = express();
+var expressJWT = require('express-jwt');
+var jwt = require('jsonwebtoken');
+var bearerToken = require('express-bearer-token');
+var cors = require('cors');
 
 require('./app/config.js');
-var createChannel = require('./app/create-channel.js');
+
+var hfc = require('fabric-client');
+
 var getRegisteredUser = require('./app/get-registered-user.js');
-var joinChannel = require('./app/join-channel.js');
-var installChaincode = require('./app/install-chaincode.js');
-var instantiateChaincode = require('./app/instantiate-chaincode');
 var query = require('./app/query.js');
-var invokeChaincode = require('./app/invoke.js');
-var updateAnchorPeers = require('./app/update-anchor-peers.js');
-var updateChannelConfig = require('./app/update-channel-config');
-var addNewOrg = require('./app/add-new-org.js');
-var utils = require('./app/utils.js');
-
-// var helper = require('./raw-app/helper.js');
-// var createChannel = require('./raw-app/create-channel.js');
-// var join = require('./raw-app/join-channel.js');
-// var updateAnchorPeers = require('./raw-app/update-anchor-peers.js');
-// var install = require('./raw-app/install-chaincode.js');
-// var instantiate = require('./raw-app/instantiate-chaincode.js');
-// var invoke = require('./raw-app/invoke-transaction.js');
-// var query = require('./raw-app/query.js');
+var createChannel = require('./app/create-channel.js');
 
 
+var host = process.env.HOST || hfc.getConfigSetting('host');
+var port = process.env.PORT || hfc.getConfigSetting('port');
 
-/**
- * Join peer mới của Org thành viên vào channel:
- */
-async function joinNewPeer() {
-    /**
-     * TODO:
-     *  (1) Generate crypto config cho peer mới:
-     *      - Edit file crypto-config.yaml/PeerOrgs/<OrgName>/Template/Count ++
-     *      - chạy lệnh để generate: E.g. ../../bin/cryptogen extend --config=./crypto-config.yaml
-     *  (2) Tạo file docker compose cho container của peer mới (E.g. docker-compose-new-peer.yaml), chú ý ko trùng ports
-     *  (3) Khởi chạy container của peer mới theo file docker compose mới tạo với lệnh "docker-compose up"
-     *  (4) Edit file network-profiles/network-config.yaml: Thêm thông tin về peer mới
-     *  (5) Sử dụng SDK function join channel
-     */
-    await joinChannel.joinChannel("mychannel", ["peer2.org2.example.com"], "Org2", "Jim");
+///////////////////////////////////////////////////////////////////////////////
+//////////////////////////////// SET CONFIGURATONS ////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+app.options('*', cors());
+app.use(cors());
+//support parsing of application/json type post data
+app.use(bodyParser.json());
+//support parsing of application/x-www-form-urlencoded post data
+app.use(bodyParser.urlencoded({
+	extended: false
+}));
+// set secret variable
+app.set('secret', 'thisismysecret');
+app.use(expressJWT({
+	secret: 'thisismysecret'
+}).unless({
+	path: ['/users']
+}));
+app.use(bearerToken());
+app.use(function (req, res, next) {
+	logger.debug(' ------>>>>>> new request for %s', req.originalUrl);
+	if (req.originalUrl.indexOf('/users') >= 0) {
+		return next();
+	}
+
+	var token = req.token;
+	jwt.verify(token, app.get('secret'), function (err, decoded) {
+		if (err) {
+			res.send({
+				success: false,
+				message: 'Failed to authenticate token. Make sure to include the ' +
+					'token returned from /users call in the authorization header ' +
+					' as a Bearer token'
+			});
+			return;
+		} else {
+			// add the decoded user name and org name to the request object
+			// for the downstream code to use
+			req.username = decoded.username;
+			req.orgname = decoded.orgName;
+			logger.debug(util.format('Decoded from JWT token: username - %s, orgname - %s', decoded.username, decoded.orgName));
+			return next();
+		}
+	});
+});
+
+///////////////////////////////////////////////////////////////////////////////
+//////////////////////////////// START SERVER /////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+var server = http.createServer(app).listen(port, function () {});
+logger.info('****************** SERVER STARTED ************************');
+logger.info('***************  http://%s:%s  ******************', host, port);
+server.timeout = 240000;
+
+function getErrorMessage(field) {
+	var response = {
+		success: false,
+		message: field + ' field is missing or Invalid in the request'
+	};
+	return response;
 }
 
-async function start() {
-    // await installChaincode.installChaincode(["peer0.org1.example.com", "peer1.org1.example.com"], "another", "/src/github.com/example_cc/node", "v1", "node", "Org1", "Tom");
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////// REST ENDPOINTS START HERE ///////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+// Register and enroll user
+app.post('/users', async function (req, res) {
+	var username = req.body.username;
+	var orgName = req.body.orgName;
+	logger.debug('End point : /users');
+	logger.debug('User name : ' + username);
+	logger.debug('Org name  : ' + orgName);
+	if (!username) {
+		res.json(getErrorMessage('\'username\''));
+		return;
+	}
+	if (!orgName) {
+		res.json(getErrorMessage('\'orgName\''));
+		return;
+	}
+	var token = jwt.sign({
+		exp: Math.floor(Date.now() / 1000) + parseInt(hfc.getConfigSetting('jwt_expiretime')),
+		username: username,
+		orgName: orgName
+	}, app.get('secret'));
+	let response = await getRegisteredUser.getRegisteredUser(username, orgName, true);
+	logger.debug('-- returned from registering the username %s for organization %s', username, orgName);
+	if (response && typeof response !== 'string') {
+		logger.debug('Successfully registered the username %s for organization %s', username, orgName);
+		response.token = token;
+		res.json(response);
+	} else {
+		logger.debug('Failed to register the username %s for organization %s with::%s', username, orgName, response);
+		res.json({
+			success: false,
+			message: response
+		});
+	}
+});
 
-    /**
-     * MAIN FLOW: 
-     *  (1) Create channel
-     *  (2) Register User
-     *  (3) Join Peers into channel
-     *  (4) Install chaincode
-     *  (5) Instantiate chaincode
-     *  (6) Query chaincode
-     *  (7) Invoke chaincode
-     */
-    // await createChannel.createChannel("mychannel", "../../fabric/channel-artifacts/channel.tx", "Org1");
-    // await getRegisteredUser.getRegisteredUser("Tom", "Org1", true);
-    // await getRegisteredUser.getRegisteredUser("Jim", "Org2", true);
-    // await joinChannel.joinChannel("mychannel", ["peer0.org1.example.com", "peer1.org1.example.com"], "Org1", "Tom");
-    // await joinChannel.joinChannel("mychannel", ["peer0.org2.example.com"], "Org2", "Jim");
-    // await updateAnchorPeers.updateAnchorPeers("mychannel", "../../fabric/channel-artifacts/Org1MSPanchors.tx", "Tom", "Org1");
-    // await updateAnchorPeers.updateAnchorPeers("mychannel", "../../fabric/channel-artifacts/Org2MSPanchors.tx", "Jim", "Org2");
-    // await installChaincode.installChaincode(["peer0.org1.example.com", "peer1.org1.example.com"], "mycc", "github.com/example_cc/go", "v0", "golang", "Org1", "Tom");
-    // await installChaincode.installChaincode(["peer0.org2.example.com"], "mycc", "github.com/example_cc/go", "v0", "golang", "Org2", "Jim");
-    // await instantiateChaincode.instantiateChaincode(["peer0.org1.example.com", "peer1.org1.example.com"], "mychannel", "mycc", "v0", "golang", "init", ["a", "100", "b", "200"], "Org1", "Tom");
-    // await query.queryChaincode(["peer0.org1.example.com","peer1.org1.example.com"], 'mycc', 'query', ['a'], 'mychannel', 'Org1', 'Tom');
-    // await invokeChaincode.invokeChaincode(["peer0.org1.example.com", "peer0.org2.example.com"], "mycc", "move", ["a", "b", "10"], "mychannel", "Org1", "Tom");
+// Query get Peers for Org
+app.get('/user/peers', async (req, res) => {
+	var username = req.username;
+	var orgName = req.orgname;
+	logger.debug('End point : /user/peers');
+	logger.debug('User name : ' + username);
+	logger.debug('Org name  : ' + orgName);
 
-    /**
-     * Join New Peer of an existing Org into channel
-     */
-    // await joinNewPeer();
+	if (!username) {
+		res.json(getErrorMessage('\'username\''));
+		return;
+	}
+	if (!orgName) {
+		res.json(getErrorMessage('\'orgName\''));
+		return;
+	}
 
-    /**
-     * Update channel config
-     *  (i) Modify channel Batchsize
-     */
-    // await updateChannelConfig.modifyBatchSize(20, 'mychannel', 'Org1', 'Tom');
+	let response = await query.getPeersForOrg(orgName, username);
+	res.send(response);
+});
 
+// Query channel list
+app.get('/channels/:peer', async (req, res) => {
+	var username = req.username;
+	var orgName = req.orgname;
+	var peer = req.params.peer
+	logger.debug('End point : /user/peers');
+	logger.debug('User name : ' + username);
+	logger.debug('Org name  : ' + orgName);
 
-    /**
-     * Add new Org into network
-     *  (1) Chuẩn bị các file cấu hình
-     *  (2) Tạo certificate
-     *  ---
-     *  (3) Update cấu hình channel
-     *  ---
-     *  (4) Start các container của Org mới
-     *  ---
-     *  (5) Join các peer vào channel
-     *  (6) Cài đặt và upgrade chaincode (Optional)
-     */
-    // await addNewOrg.addNewOrg('Org3', 'mychannel', 'Org1', 'Tom');
-    // await getRegisteredUser.getRegisteredUser("Alex", "Org3", true);
-    // await joinChannel.joinChannel("mychannel", ["peer0.org3.example.com", "peer1.org3.example.com"], "Org3", "Alex");
+	if (!username) {
+		res.json(getErrorMessage('\'username\''));
+		return;
+	}
+	if (!orgName) {
+		res.json(getErrorMessage('\'orgName\''));
+		return;
+	}
 
+	let response = await query.getChannelList(peer,orgName, username);
+	res.send(response);
+});
 
+// Create Channel
+app.post('/channels', async function (req, res) {
+	logger.info('<<<<<<<<<<<<<<<<< C R E A T E  C H A N N E L >>>>>>>>>>>>>>>>>');
+	logger.debug('End point : /channels');
+	var channelName = req.body.channelName;
+	var channelConfigPath = req.body.channelConfigPath;
+	logger.debug('Channel name : ' + channelName);
+	logger.debug('channelConfigPath : ' + channelConfigPath); //../artifacts/channel/mychannel.tx
+	if (!channelName) {
+		res.json(getErrorMessage('\'channelName\''));
+		return;
+	}
+	if (!channelConfigPath) {
+		res.json(getErrorMessage('\'channelConfigPath\''));
+		return;
+	}
 
-    // await query.queryInfo("peer0.org1.example.com", "mychannel", "Org1", "Tom");
-    // await query.queryBlockByHash("peer0.org1.example.com", "8243d533b8da74812e3adbd116cfd6ca16b0ddbdd2ecb97af1a4aa009f7cae0b", "mychannel", "Org1", "Tom");
-    // await query.getPeers("mychannel", "Org1", "Tom");
-
-    try {
-        let blockList = await query.getBlockList(-1, 10, "peer0.org1.example.com", "mychannel", "Org1", "Tom");
-    } catch (err) {
-        console.log("ERROR: ", err);
-    }
-}
-
-start();
+	let message = await createChannel.createChannel(channelName, channelConfigPath, req.username, req.orgname);
+	res.send(message);
+});

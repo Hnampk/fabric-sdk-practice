@@ -39,6 +39,7 @@ async function getClientForOrg(orgName, username) {
     //     và gắn vào client
     if (username) {
         let user = await client.getUserContext(username, true);
+        // console.log("user:", user)
         if (!user) {
             throw new Error('User was not found :', username);
         }

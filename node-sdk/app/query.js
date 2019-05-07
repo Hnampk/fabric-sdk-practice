@@ -4,7 +4,35 @@ var util = require('util');
 var helper = require('./helper.js');
 const agent = require('superagent-promise')(require('superagent'), Promise);
 var logger = helper.getLogger('Query');
-const appRoot = require('app-root-path');
+
+var TxValidationCode = {
+    VALID: 0,
+    NIL_ENVELOPE: 1,
+    BAD_PAYLOAD: 2,
+    BAD_COMMON_HEADER: 3,
+    BAD_CREATOR_SIGNATURE: 4,
+    INVALID_ENDORSER_TRANSACTION: 5,
+    INVALID_CONFIG_TRANSACTION: 6,
+    UNSUPPORTED_TX_PAYLOAD: 7,
+    BAD_PROPOSAL_TXID: 8,
+    DUPLICATE_TXID: 9,
+    ENDORSEMENT_POLICY_FAILURE: 10,
+    MVCC_READ_CONFLICT: 11,
+    PHANTOM_READ_CONFLICT: 12,
+    UNKNOWN_TX_TYPE: 13,
+    TARGET_CHAIN_NOT_FOUND: 14,
+    MARSHAL_TX_ERROR: 15,
+    NIL_TXACTION: 16,
+    EXPIRED_CHAINCODE: 17,
+    CHAINCODE_VERSION_CONFLICT: 18,
+    BAD_HEADER_EXTENSION: 19,
+    BAD_CHANNEL_HEADER: 20,
+    BAD_RESPONSE_PAYLOAD: 21,
+    BAD_RWSET: 22,
+    ILLEGAL_WRITESET: 23,
+    INVALID_OTHER_REASON: 255,
+}
+
 
 /**
  * Query chaincode
@@ -182,6 +210,66 @@ async function waitForReady(Peer) {
     });
 }
 
+async function getChannelList(peer, orgName, username) {
+    try {
+        // (1) Thiết lập client của Org
+        let client = await helper.getClientForOrg(orgName, username);
+        let result = await client.queryChannels(peer);
+
+        return result.channels;
+    } catch (err) {
+        logger.error('Failed to query due to error: ' + err.stack ? err.stack : err);
+        return err.toString();
+    }
+}
+
+async function getOrgs(channelName, orgName, username) {
+
+    let channel = null;
+
+    try {
+        // (1) Thiết lập client của Org
+        let client = await helper.getClientForOrg(orgName, username);
+
+        // (2) Thiết lập instance của channel và kiểm tra thông tin
+        channel = client.getChannel(channelName);
+        if (!channel) {
+            let message = util.format('Channel %s was not defined in the connection profile', channelName);
+            logger.error(message);
+            throw new Error(message)
+        }
+
+        let results = channel.getOrganizations();
+
+        console.log(results);
+
+
+    } catch (err) {
+        logger.error('Failed to query due to error: ' + err.stack ? err.stack : err);
+        return err.toString();
+    } finally {
+        // (4) Close channel
+        if (channel) {
+            channel.close();
+        }
+    }
+}
+
+async function getPeersForOrg(orgName, username) {
+    try {
+        let client = await helper.getClientForOrg(orgName, username);
+
+        let peers = client.getPeersForOrg(orgName + "MSP");
+
+        return peers.map(peer => {
+            return peer.getName()
+        });
+    } catch (err) {
+        logger.error('Failed to query due to error: ' + err.stack ? err.stack : err);
+        return err.toString();
+    }
+}
+
 async function getPeers(channelName, orgName, username) {
 
     let channel = null;
@@ -198,7 +286,7 @@ async function getPeers(channelName, orgName, username) {
             throw new Error(message)
         }
 
-        let results = channel.getPeers();
+        let results = channel.getChannelPeers();
 
         let peerLists = [];
         results.forEach(async (peer) => {
@@ -213,6 +301,7 @@ async function getPeers(channelName, orgName, username) {
             })
         })
         console.log(peerLists);
+
 
 
 
@@ -291,8 +380,41 @@ async function getBlockList(to, offset, peer, channelName, orgName, username) {
     }
 }
 
+async function queryTransaction(peer, channelName, orgName, username) {
+    let channel = null;
+
+    try {
+        // (1) Thiết lập client của Org
+        let client = await helper.getClientForOrg(orgName, username);
+
+        // (2) Thiết lập instance của channel và kiểm tra thông tin
+        channel = client.getChannel(channelName);
+        if (!channel) {
+            let message = util.format('Channel %s was not defined in the connection profile', channelName);
+            logger.error(message);
+            throw new Error(message)
+        }
+
+        let tx = await channel.queryTransaction("558a4502339a7f74e479247e675b4c540a54057a00d7b9f8ced8d17fbe1ed877", peer);
+
+        console.log(JSON.stringify(tx));
+    } catch (err) {
+        logger.error('Failed to query due to error: ' + err.stack ? err.stack : err);
+        return err.toString();
+    } finally {
+        // (4) Close channel
+        if (channel) {
+            channel.close();
+        }
+    }
+}
+
 exports.queryChaincode = query;
 exports.queryInfo = queryInfo;
 exports.queryBlockByHash = queryBlockByHash;
 exports.getPeers = getPeers;
 exports.getBlockList = getBlockList;
+exports.queryTransaction = queryTransaction;
+exports.getChannelList = getChannelList;
+exports.getOrgs = getOrgs;
+exports.getPeersForOrg = getPeersForOrg;
