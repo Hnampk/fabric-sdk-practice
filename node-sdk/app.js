@@ -18,6 +18,7 @@ var hfc = require('fabric-client');
 var getRegisteredUser = require('./app/get-registered-user.js');
 var query = require('./app/query.js');
 var createChannel = require('./app/create-channel.js');
+var joinChannel = require('./app/join-channel.js');
 
 
 var host = process.env.HOST || hfc.getConfigSetting('host');
@@ -51,7 +52,7 @@ app.use(function (req, res, next) {
 	var token = req.token;
 	jwt.verify(token, app.get('secret'), function (err, decoded) {
 		if (err) {
-			res.send({
+			res.json({
 				success: false,
 				message: 'Failed to authenticate token. Make sure to include the ' +
 					'token returned from /users call in the authorization header ' +
@@ -141,10 +142,32 @@ app.get('/user/peers', async (req, res) => {
 	}
 
 	let response = await query.getPeersForOrg(orgName, username);
-	res.send(response);
+	res.json(response);
 });
 
-// Query channel list
+// Query Channel list
+app.get('/channels', async (req, res) => {
+	var username = req.username;
+	var orgName = req.orgname;
+	logger.debug('End point : /channels');
+	logger.debug('User name : ' + username);
+	logger.debug('Org name  : ' + orgName);
+
+	if (!username) {
+		res.json(getErrorMessage('\'username\''));
+		return;
+	}
+	if (!orgName) {
+		res.json(getErrorMessage('\'orgName\''));
+		return;
+	}
+
+	let response = await query.getChannels(orgName);
+	res.json(response);
+});
+
+
+// Query channel list by peer
 app.get('/channels/:peer', async (req, res) => {
 	var username = req.username;
 	var orgName = req.orgname;
@@ -163,7 +186,7 @@ app.get('/channels/:peer', async (req, res) => {
 	}
 
 	let response = await query.getChannelList(peer,orgName, username);
-	res.send(response);
+	res.json(response);
 });
 
 // Create Channel
@@ -183,6 +206,29 @@ app.post('/channels', async function (req, res) {
 		return;
 	}
 
-	let message = await createChannel.createChannel(channelName, channelConfigPath, req.username, req.orgname);
-	res.send(message);
+	let message = await createChannel.createChannel(channelName, channelConfigPath, req.orgname);
+	res.json(message);
+});
+
+// Join Channel
+app.post('/channels/:channelName/peers', async function(req, res) {
+	logger.info('<<<<<<<<<<<<<<<<< J O I N  C H A N N E L >>>>>>>>>>>>>>>>>');
+	var channelName = req.params.channelName;
+	var peers = req.body.peers;
+	logger.debug('channelName : ' + channelName);
+	logger.debug('peers : ' + peers);
+	logger.debug('username :' + req.username);
+	logger.debug('orgname:' + req.orgname);
+
+	if (!channelName) {
+		res.json(getErrorMessage('\'channelName\''));
+		return;
+	}
+	if (!peers || peers.length == 0) {
+		res.json(getErrorMessage('\'peers\''));
+		return;
+	}
+
+	let message =  await joinChannel.joinChannel(channelName, peers, req.orgname, req.username);
+	res.json(message);
 });

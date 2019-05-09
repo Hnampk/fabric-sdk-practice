@@ -214,9 +214,39 @@ async function getChannelList(peer, orgName, username) {
     try {
         // (1) Thiết lập client của Org
         let client = await helper.getClientForOrg(orgName, username);
-        let result = await client.queryChannels(peer);
+        let result = await client.queryChannels(peer, true);
+
+        console.log(result.channels)
 
         return result.channels;
+    } catch (err) {
+        logger.error('Failed to query due to error: ' + err.stack ? err.stack : err);
+        return err.toString();
+    }
+}
+
+async function getChannels(orgName) {
+    try {
+        // (1) Thiết lập client của Org
+        let client = await helper.getClientForOrg(orgName);
+        let channels = client.getChannels();
+
+        return channels;
+    } catch (err) {
+        logger.error('Failed to query due to error: ' + err.stack ? err.stack : err);
+        return err.toString();
+    }
+}
+
+async function getChannelByName(channelName, orgName, username) {
+    try {
+        // (1) Thiết lập client của Org
+        let client = await helper.getClientForOrg(orgName, username);
+
+        let channel = client.getChannel(channelName, true);
+
+        console.log(channel.getPeer('peer0.org1.example.com'));
+
     } catch (err) {
         logger.error('Failed to query due to error: ' + err.stack ? err.stack : err);
         return err.toString();
@@ -418,3 +448,5 @@ exports.queryTransaction = queryTransaction;
 exports.getChannelList = getChannelList;
 exports.getOrgs = getOrgs;
 exports.getPeersForOrg = getPeersForOrg;
+exports.getChannels = getChannels;
+exports.getChannelByName = getChannelByName;
