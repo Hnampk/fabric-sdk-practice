@@ -145,7 +145,7 @@ app.get('/user/peers', async (req, res) => {
 	res.json(response);
 });
 
-// Query Channel list
+// Query Org Channel list
 app.get('/channels', async (req, res) => {
 	var username = req.username;
 	var orgName = req.orgname;
@@ -162,7 +162,7 @@ app.get('/channels', async (req, res) => {
 		return;
 	}
 
-	let response = await query.getChannels(orgName);
+	let response = await query.getOrgChannelList(orgName, username);
 	res.json(response);
 });
 

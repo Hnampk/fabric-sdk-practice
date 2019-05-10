@@ -70,7 +70,8 @@ async function start() {
     // await query.queryChaincode(["peer0.org1.example.com","peer1.org1.example.com"], 'mycc', 'query', ['a'], 'mychannel', 'Org1', 'Tom');
     // await invokeChaincode.invokeChaincode(["peer0.org1.example.com", "peer0.org2.example.com"], "mycc", "move", ["a", "b", "10"], "mychannel", "Org1", "Tom");
 
-    await query.getChannelList("peer0.org1.example.com", "Org1", "Tom");
+    // await query.getChannelList("peer0.org1.example.com", "Org1", "Tom");
+    await query.getOrgChannelList( "Org1", "Tom");
     
     // await createChannel.createChannel("anotherchannel", "../../fabric/channel-artifacts/anotherchannel.tx", "Org1");
     // await joinChannel.joinChannel("anotherchannel", ["peer0.org1.example.com", "peer1.org1.example.com"], "Org1", "Tom");

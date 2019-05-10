@@ -210,15 +210,55 @@ async function waitForReady(Peer) {
     });
 }
 
+/**
+ * 
+ * @param {*} peer 
+ * @param {*} orgName 
+ * @param {*} username 
+ * @returns {Promise<Array<{channel_id: string}>>}
+ */
 async function getChannelList(peer, orgName, username) {
     try {
         // (1) Thiết lập client của Org
         let client = await helper.getClientForOrg(orgName, username);
         let result = await client.queryChannels(peer, true);
 
-        console.log(result.channels)
+        // console.log(result.channels)
 
         return result.channels;
+    } catch (err) {
+        logger.error('Failed to query due to error: ' + err.stack ? err.stack : err);
+        return err.toString();
+    }
+}
+
+/**
+ * Lấy danh sách các channel mà các Peer của Org đã tham gia
+ * @param {string} orgName 
+ * @param {string} username 
+ * @returns {Promise<Array<string>>}
+ */
+async function getOrgChannelList(orgName, username) {
+    try {
+        let peers = await getPeersForOrg(orgName, username);
+        let channelList = [];
+
+        for(let i = 0; i < peers.length; i++){
+            let peer = peers[i];
+            let peerChannels = await getChannelList(peer, orgName, username);
+            
+            for(let j = 0; j < peerChannels.length; j++){
+                let channel = peerChannels[j];
+                let exist = channelList.findIndex(channelName=>{
+                    return channelName == channel.channel_id;
+                });
+                
+                if(exist == -1){
+                    channelList.push(channel.channel_id);
+                }
+            }
+        }        
+        return channelList;
     } catch (err) {
         logger.error('Failed to query due to error: ' + err.stack ? err.stack : err);
         return err.toString();
@@ -285,6 +325,12 @@ async function getOrgs(channelName, orgName, username) {
     }
 }
 
+/**
+ * 
+ * @param {*} orgName 
+ * @param {*} username 
+ * @returns {Promise<Array<string>>}
+ */
 async function getPeersForOrg(orgName, username) {
     try {
         let client = await helper.getClientForOrg(orgName, username);
@@ -450,3 +496,4 @@ exports.getOrgs = getOrgs;
 exports.getPeersForOrg = getPeersForOrg;
 exports.getChannels = getChannels;
 exports.getChannelByName = getChannelByName;
+exports.getOrgChannelList = getOrgChannelList;

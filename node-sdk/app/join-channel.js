@@ -16,13 +16,14 @@ async function joinChannel(channelName, peers, orgName, username) {
     logger.debug('\n\n============ Join Channel start ============\n')
 
     let errorMessage = null;
+	var all_eventhubs = [];
     try {
 
         logger.info('Calling peers in organization "%s" to join the channel', orgName);
 
         // (1) Thiết lập client của Org
         let client = await helper.getClientForOrg(orgName, username);
-        console.log('Successfully got the fabric client for the organization "%s"', orgName);
+        logger.debug('Successfully got the fabric client for the organization "%s"', orgName);
 
         // (2) Kiểm tra thông tin và lấy Genesis block của channel
         let channel = client.getChannel(channelName);
@@ -37,14 +38,28 @@ async function joinChannel(channelName, peers, orgName, username) {
         let genesisBlock = await channel.getGenesisBlock(request);
 
         // (3) Thực hiện join các peer vào channel
+
+        // tell each peer to join and wait 10 seconds
+        // for the channel to be created on each peer
+        var promises = [];
+        promises.push(new Promise(resolve => setTimeout(resolve, 10000)));
+
         let joinRequest = {
             targets: peers, // mảng tên các peer, phải khớp với connection profile
             txId: client.newTransactionID(true),
             block: genesisBlock
         }
-        let results = await channel.joinChannel(joinRequest);
-        for (let i in results) {
-            let peerResult = results[i];
+        let joinPromise = channel.joinChannel(joinRequest);
+        promises.push(joinPromise);
+        let results = await Promise.all(promises);
+        logger.debug(util.format('Join Channel R E S P O N S E : %j', results));
+
+		// lets check the results of sending to the peers which is
+		// last in the results array
+        let peersResults = results.pop();
+        
+        for (let i in peersResults) {
+            let peerResult = peersResults[i];
             if (peerResult instanceof Error) {
                 errorMessage = util.format('Failed to join peer to the channel with error :: %s', peerResult.toString());
                 logger.error(errorMessage);
@@ -57,8 +72,35 @@ async function joinChannel(channelName, peers, orgName, username) {
         }
     } catch (err) {
         logger.error('Failed to join channel due to error: ' + err.stack ? err.stack : err);
-        errorMessage = error.toString();
+        errorMessage = err.toString();
     }
+
+	// need to shutdown open event streams
+	all_eventhubs.forEach((eh) => {
+		eh.disconnect();
+	});
+
+	if (!errorMessage) {
+		let message = util.format(
+			'Successfully joined peers in organization %s to the channel:%s',
+			orgName, channelName);
+		logger.info(message);
+		// build a response to send back to the REST caller
+		const response = {
+			success: true,
+			message: message
+		};
+		return response;
+	} else {
+		let message = util.format('Failed to join all peers to channel. cause:%s',errorMessage);
+		logger.error(message);
+		// build a response to send back to the REST caller
+		const response = {
+			success: false,
+			message: errorMessage
+		};
+		return response;
+	}
 }
 
 exports.joinChannel = joinChannel;
