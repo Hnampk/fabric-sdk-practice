@@ -124,8 +124,9 @@ app.post('/users', async function (req, res) {
 	}
 });
 
-// Query get Peers for Org
+// Query getPeersForOrg
 app.get('/user/peers', async (req, res) => {
+	logger.info('<<<<<<<<<<<<<<<<< Org\'s Peer list >>>>>>>>>>>>>>>>>');
 	var username = req.username;
 	var orgName = req.orgname;
 	logger.debug('End point : /user/peers');
@@ -145,8 +146,9 @@ app.get('/user/peers', async (req, res) => {
 	res.json(response);
 });
 
-// Query Org Channel list
+// Query getOrgChannelList
 app.get('/channels', async (req, res) => {
+	logger.info('<<<<<<<<<<<<<<<<< Org\'s Channel List >>>>>>>>>>>>>>>>>');
 	var username = req.username;
 	var orgName = req.orgname;
 	logger.debug('End point : /channels');
@@ -163,18 +165,20 @@ app.get('/channels', async (req, res) => {
 	}
 
 	let response = await query.getOrgChannelList(orgName, username);
+	console.log(response)
 	res.json(response);
 });
 
 
-// Query channel list by peer
-app.get('/channels/:peer', async (req, res) => {
+// Query getChannelListByPeer
+app.get('/:peer/channels', async (req, res) => {
 	var username = req.username;
 	var orgName = req.orgname;
 	var peer = req.params.peer
 	logger.debug('End point : /user/peers');
 	logger.debug('User name : ' + username);
 	logger.debug('Org name  : ' + orgName);
+	logger.debug('peer name  : ' + peer);
 
 	if (!username) {
 		res.json(getErrorMessage('\'username\''));
@@ -184,8 +188,44 @@ app.get('/channels/:peer', async (req, res) => {
 		res.json(getErrorMessage('\'orgName\''));
 		return;
 	}
+	if (!peer) {
+		res.json(getErrorMessage('\'peer\''));
+		return;
+	}
 
-	let response = await query.getChannelList(peer,orgName, username);
+	let response = await query.getChannelList(peer, orgName, username);
+	res.json(response);
+});
+
+// Query getDidNotJoinedChannel
+app.get('/:peer/not_joined', async (req, res) => {
+	logger.info('<<<<<<<<<<<<<<<<< Peer\'s didn\'t join channels >>>>>>>>>>>>>>>>>');
+	var username = req.username;
+	var orgName = req.orgname;
+	var peer = req.params.peer
+
+	logger.debug('End point : /:peer/not_joined');
+	logger.debug('User name : ' + username);
+	logger.debug('Org name  : ' + orgName);
+	logger.debug('peer name  : ' + peer);
+
+	if (!username) {
+		res.json(getErrorMessage('\'username\''));
+		return;
+	}
+
+	if (!orgName) {
+		res.json(getErrorMessage('\'orgName\''));
+		return;
+	}
+
+	if (!peer) {
+		res.json(getErrorMessage('\'peer\''));
+		return;
+	}
+
+	let response = await query.getChannelListNotJoined(peer, orgName, username);
+
 	res.json(response);
 });
 
@@ -211,7 +251,7 @@ app.post('/channels', async function (req, res) {
 });
 
 // Join Channel
-app.post('/channels/:channelName/peers', async function(req, res) {
+app.post('/channels/:channelName/peers', async function (req, res) {
 	logger.info('<<<<<<<<<<<<<<<<< J O I N  C H A N N E L >>>>>>>>>>>>>>>>>');
 	var channelName = req.params.channelName;
 	var peers = req.body.peers;
@@ -229,6 +269,24 @@ app.post('/channels/:channelName/peers', async function(req, res) {
 		return;
 	}
 
-	let message =  await joinChannel.joinChannel(channelName, peers, req.orgname, req.username);
+	let message = await joinChannel.joinChannel(channelName, peers, req.orgname, req.username);
+	res.json(message);
+});
+
+// Get Channel Discovery Results
+app.post('/discover/:channelName', async (req, res) => {
+	logger.info('<<<<<<<<<<<<<<<<< DISCOVER CHANNEL >>>>>>>>>>>>>>>>>');
+
+	var channelName = req.params.channelName;
+	logger.debug('channelName : ' + channelName);
+	logger.debug('username :' + req.username);
+	logger.debug('orgname:' + req.orgname);
+
+	if (!channelName) {
+		res.json(getErrorMessage('\'channelName\''));
+		return;
+	}
+
+	let message = await query.getChannelDiscoveryResults(channelName, req.orgname, req.username);
 	res.json(message);
 });

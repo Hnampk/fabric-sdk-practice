@@ -20,6 +20,7 @@ async function invokeChaincode(peers, chaincodeName, functionName, args, channel
     logger.debug(util.format('\n============ invoke transaction on channel %s ============\n', channelName));
 
     let channel = null;
+    let errorMessage = "";
 
     try {
         // (1) Thiết lập client của Org
@@ -58,9 +59,9 @@ async function invokeChaincode(peers, chaincodeName, functionName, args, channel
             } else if (proposalResponses[i].response && proposalResponses[i].response.status === 200) {
                 logger.info('invoke chaincode proposal was good');
             } else {
-                all_good = false;
-                error_message = util.format('invoke chaincode proposal failed for an unknown reason %j', proposalResponses[i]);
-                logger.error(error_message);
+                allGood = false;
+                errorMessage = util.format('invoke chaincode proposal failed for an unknown reason %j', proposalResponses[i]);
+                logger.error(errorMessage);
             }
         }
 

@@ -58,7 +58,7 @@ async function start() {
      *  (7) Invoke chaincode
      */
     // await createChannel.createChannel("mychannel", "../../fabric/channel-artifacts/channel.tx", "Org1");
-    // await getRegisteredUser.getRegisteredUser("Tom", "Org1", true);
+    await getRegisteredUser.getRegisteredUser("Tom", "Org1", true);
     // await getRegisteredUser.getRegisteredUser("Jim", "Org2", true);
     // await joinChannel.joinChannel("mychannel", ["peer0.org1.example.com", "peer1.org1.example.com"], "Org1", "Tom");
     // await joinChannel.joinChannel("mychannel", ["peer0.org2.example.com"], "Org2", "Jim");
@@ -71,12 +71,16 @@ async function start() {
     // await invokeChaincode.invokeChaincode(["peer0.org1.example.com", "peer0.org2.example.com"], "mycc", "move", ["a", "b", "10"], "mychannel", "Org1", "Tom");
 
     // await query.getChannelList("peer0.org1.example.com", "Org1", "Tom");
-    await query.getOrgChannelList( "Org1", "Tom");
-    
+    // await query.getOrgChannelList( "Org1", "Tom");
+
     // await createChannel.createChannel("anotherchannel", "../../fabric/channel-artifacts/anotherchannel.tx", "Org1");
     // await joinChannel.joinChannel("anotherchannel", ["peer0.org1.example.com", "peer1.org1.example.com"], "Org1", "Tom");
     // await joinChannel.joinChannel("anotherchannel", ["peer0.org2.example.com", "peer1.org2.example.com"], "Org2", "Jim");
 
+
+
+    // let a = await query.getChannelDiscoveryResults('mychannel', 'Org1', 'Tom');
+    await query.getChannelListNotJoined('peer0.org1.example.com', 'Org1', 'Tom');
 
     /**
      * Join New Peer of an existing Org into channel

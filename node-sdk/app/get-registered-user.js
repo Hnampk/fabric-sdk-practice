@@ -100,7 +100,7 @@ async function getRegisteredUser(username, orgName, isJson) {
         return response;
     } catch (err) {
         logger.error('Failed to get registered user: %s with error: %s', username, err.toString());
-        return 'failed ' + error.toString();
+        return 'failed ' + err.toString();
     }
 }
 

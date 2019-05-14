@@ -211,19 +211,17 @@ async function waitForReady(Peer) {
 }
 
 /**
- * 
+ * Lấy danh sách các Channel mà peer đã tham gia
  * @param {*} peer 
  * @param {*} orgName 
  * @param {*} username 
- * @returns {Promise<Array<{channel_id: string}>>}
+ * @returns {Promise<Array<{channel_id: string}>|string>}
  */
 async function getChannelList(peer, orgName, username) {
     try {
         // (1) Thiết lập client của Org
         let client = await helper.getClientForOrg(orgName, username);
         let result = await client.queryChannels(peer, true);
-
-        // console.log(result.channels)
 
         return result.channels;
     } catch (err) {
@@ -233,35 +231,102 @@ async function getChannelList(peer, orgName, username) {
 }
 
 /**
+ * Lấy danh sách các Channel của Org mà peer chưa tham gia
+ * @param {*} peer 
+ * @param {*} orgName 
+ * @param {*} username 
+ * @returns {Promise<Array<{channel_id: string}>|string>}
+ */
+async function getChannelListNotJoined(peer, orgName, username) {
+    try {
+        let result = {
+            success: true,
+            channels: [],
+            msg: []
+        };
+
+        // Lấy danh sách các Peer khác trong cùng Org
+        let peerList = await getPeersForOrg(orgName, username);
+        let peerIndex = peerList.indexOf(peer);
+
+        if (peerIndex > -1)
+            peerList.splice(peerIndex, 1);
+
+        for (let i = 0; i < peerList.length; i++) {
+            let otherPeer = peerList[i];
+
+            // Với mỗi Peer, lấy danh sách các Channel đã join
+            let channels = await getChannelList(otherPeer, orgName, username);
+
+            if (typeof (channels) == 'string') {
+                result.success = false;
+                // lỗi
+                result.msg.push(channels);
+                continue;
+            }
+
+            // Lọc trùng, đưa vào mảng
+            if (i = 0) {
+                result.channels = channels;
+            } else {
+                channels.forEach(channel => {
+                    let exist = result.channels.indexOf(channel.channel_id);
+
+                    if (exist == -1) {
+                        // chưa có trong mảng
+                        result.channels.push(channel.channel_id);
+                    }
+                });
+            }
+        }
+        return result;
+    } catch (err) {
+        logger.error('Failed to query due to error: ' + err.stack ? err.stack : err);
+        return err.toString();
+    }
+}
+
+
+/**
  * Lấy danh sách các channel mà các Peer của Org đã tham gia
  * @param {string} orgName 
  * @param {string} username 
  * @returns {Promise<Array<string>>}
  */
 async function getOrgChannelList(orgName, username) {
+    let channelList = [];
+    let msg = "";
     try {
         let peers = await getPeersForOrg(orgName, username);
-        let channelList = [];
 
-        for(let i = 0; i < peers.length; i++){
+        for (let i = 0; i < peers.length; i++) {
             let peer = peers[i];
             let peerChannels = await getChannelList(peer, orgName, username);
-            
-            for(let j = 0; j < peerChannels.length; j++){
-                let channel = peerChannels[j];
-                let exist = channelList.findIndex(channelName=>{
-                    return channelName == channel.channel_id;
-                });
-                
-                if(exist == -1){
-                    channelList.push(channel.channel_id);
+
+            if (typeof (peerChannels) == 'object') {
+                for (let j = 0; j < peerChannels.length; j++) {
+                    let channel = peerChannels[j];
+                    let exist = channelList.findIndex(channelName => {
+                        return channelName == channel.channel_id;
+                    });
+
+                    if (exist == -1) {
+                        channelList.push(channel.channel_id);
+                    }
                 }
+            } else {
+                msg += "---" + peerChannels
             }
-        }        
-        return channelList;
+        }
+        return {
+            channels: channelList,
+            msg: msg ? msg : 'success'
+        }
     } catch (err) {
         logger.error('Failed to query due to error: ' + err.stack ? err.stack : err);
-        return err.toString();
+        return {
+            msg: err.toString()
+        }
     }
 }
 
@@ -485,6 +550,46 @@ async function queryTransaction(peer, channelName, orgName, username) {
     }
 }
 
+async function getChannelDiscoveryResults(channelName, orgName, username) {
+    let channel = null;
+
+    try {
+        // (1) Thiết lập client của Org
+        let client = await helper.getClientForOrg(orgName, username);
+
+        // (2) Thiết lập instance của channel và kiểm tra thông tin
+        channel = client.getChannel(channelName);
+        if (!channel) {
+            let message = util.format('Channel %s was not defined in the connection profile', channelName);
+            logger.error(message);
+            throw new Error(message)
+        }
+
+        await channel.initialize({
+            discover: true,
+            asLocalhost: true
+        });
+
+        let something = await channel.getDiscoveryResults();
+
+        return {
+            orderers: something.orderers,
+            peers_by_org: something.peers_by_org,
+            endorsement_plans: something.endorsement_plans
+        }
+    } catch (err) {
+        logger.error('Failed to query due to error: ' + err.stack ? err.stack : err);
+        return err.toString();
+    } finally {
+        // (4) Close channel
+        if (channel) {
+            channel.close();
+        }
+    }
+
+}
+
+
 exports.queryChaincode = query;
 exports.queryInfo = queryInfo;
 exports.queryBlockByHash = queryBlockByHash;
@@ -497,3 +602,5 @@ exports.getPeersForOrg = getPeersForOrg;
 exports.getChannels = getChannels;
 exports.getChannelByName = getChannelByName;
 exports.getOrgChannelList = getOrgChannelList;
+exports.getChannelDiscoveryResults = getChannelDiscoveryResults;
+exports.getChannelListNotJoined = getChannelListNotJoined;

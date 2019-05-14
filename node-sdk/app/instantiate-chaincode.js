@@ -74,7 +74,7 @@ async function instantiateChaincode(peers, channelName, chaincodeName, chaincode
                     }
                 ],
                 policy: {
-                    '2-of': [{
+                    '1-of': [{
                         'signed-by': 0
                     }, {
                         'signed-by': 1
