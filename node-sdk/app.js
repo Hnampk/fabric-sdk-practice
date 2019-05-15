@@ -45,6 +45,7 @@ app.use(expressJWT({
 app.use(bearerToken());
 app.use(function (req, res, next) {
 	logger.debug(' ------>>>>>> new request for %s', req.originalUrl);
+
 	if (req.originalUrl.indexOf('/users') >= 0) {
 		return next();
 	}
@@ -64,6 +65,7 @@ app.use(function (req, res, next) {
 			// for the downstream code to use
 			req.username = decoded.username;
 			req.orgname = decoded.orgName;
+
 			logger.debug(util.format('Decoded from JWT token: username - %s, orgname - %s', decoded.username, decoded.orgName));
 			return next();
 		}
@@ -197,14 +199,14 @@ app.get('/:peer/channels', async (req, res) => {
 	res.json(response);
 });
 
-// Query getDidNotJoinedChannel
-app.get('/:peer/not_joined', async (req, res) => {
+// Query getChannelListSameOrg
+app.get('/:peer/other_channels', async (req, res) => {
 	logger.info('<<<<<<<<<<<<<<<<< Peer\'s didn\'t join channels >>>>>>>>>>>>>>>>>');
 	var username = req.username;
 	var orgName = req.orgname;
 	var peer = req.params.peer
 
-	logger.debug('End point : /:peer/not_joined');
+	logger.debug('End point : /:peer/other_channels');
 	logger.debug('User name : ' + username);
 	logger.debug('Org name  : ' + orgName);
 	logger.debug('peer name  : ' + peer);
@@ -224,7 +226,7 @@ app.get('/:peer/not_joined', async (req, res) => {
 		return;
 	}
 
-	let response = await query.getChannelListNotJoined(peer, orgName, username);
+	let response = await query.getChannelListSameOrg(peer, orgName, username);
 
 	res.json(response);
 });
@@ -278,6 +280,7 @@ app.post('/discover/:channelName', async (req, res) => {
 	logger.info('<<<<<<<<<<<<<<<<< DISCOVER CHANNEL >>>>>>>>>>>>>>>>>');
 
 	var channelName = req.params.channelName;
+
 	logger.debug('channelName : ' + channelName);
 	logger.debug('username :' + req.username);
 	logger.debug('orgname:' + req.orgname);
@@ -289,4 +292,24 @@ app.post('/discover/:channelName', async (req, res) => {
 
 	let message = await query.getChannelDiscoveryResults(channelName, req.orgname, req.username);
 	res.json(message);
+});
+
+// Query blocks
+app.get('/channels/:channelName/blocks', async (req, res) => {
+	logger.info('<<<<<<<<<<<<<<<<< QUERY BLOCKS >>>>>>>>>>>>>>>>>');
+
+	var channelName = req.params.channelName;
+	var peer = req.query.peer;
+	var to = req.query.to;
+	var offset = req.query.offset;
+
+	logger.debug('channelName : ' + channelName);
+	logger.debug('peer : ' + peer);
+	logger.debug('username :' + req.username);
+	logger.debug('orgname:' + req.orgname);
+	logger.debug('query details: to: %s, offset: %s, peer: %s', to, offset, peer);
+
+	let result = await query.getBlockList(to, offset, peer, channelName, req.orgname, req.username);
+	console.log(result)
+	res.json(result);
 });

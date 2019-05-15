@@ -231,13 +231,13 @@ async function getChannelList(peer, orgName, username) {
 }
 
 /**
- * Lấy danh sách các Channel của Org mà peer chưa tham gia
+ * Lấy danh sách các Channel của các Peer khác
  * @param {*} peer 
  * @param {*} orgName 
  * @param {*} username 
  * @returns {Promise<Array<{channel_id: string}>|string>}
  */
-async function getChannelListNotJoined(peer, orgName, username) {
+async function getChannelListSameOrg(peer, orgName, username) {
     try {
         let result = {
             success: true,
@@ -285,7 +285,6 @@ async function getChannelListNotJoined(peer, orgName, username) {
         return err.toString();
     }
 }
-
 
 /**
  * Lấy danh sách các channel mà các Peer của Org đã tham gia
@@ -391,9 +390,9 @@ async function getOrgs(channelName, orgName, username) {
 }
 
 /**
- * 
- * @param {*} orgName 
- * @param {*} username 
+ * Lấy danh sách các Peer của Org
+ * @param {string} orgName 
+ * @param {string} username 
  * @returns {Promise<Array<string>>}
  */
 async function getPeersForOrg(orgName, username) {
@@ -403,7 +402,7 @@ async function getPeersForOrg(orgName, username) {
         let peers = client.getPeersForOrg(orgName + "MSP");
 
         return peers.map(peer => {
-            return peer.getName()
+            return peer.getName();
         });
     } catch (err) {
         logger.error('Failed to query due to error: ' + err.stack ? err.stack : err);
@@ -411,6 +410,12 @@ async function getPeersForOrg(orgName, username) {
     }
 }
 
+/**
+ * Lấy danh sách các Peer của Channel theo network-config
+ * @param {string} channelName 
+ * @param {string} orgName 
+ * @param {string} username 
+ */
 async function getPeers(channelName, orgName, username) {
 
     let channel = null;
@@ -431,16 +436,13 @@ async function getPeers(channelName, orgName, username) {
 
         let peerLists = [];
         results.forEach(async (peer) => {
-            // console.log("--------------------------");
-            // console.log(peer);
-
             // waitForReady(peer.getPeer()); // for peer status but not ok yet!. From fabric-client/lib/Remote.js
 
             peerLists.push({
                 name: peer.getName(),
                 mspid: peer.getMspid(),
-            })
-        })
+            });
+        });
         console.log(peerLists);
 
 
@@ -458,11 +460,11 @@ async function getPeers(channelName, orgName, username) {
 }
 
 /**
- * Get all the block from 'to - offset' => 'to'.
- * @param {number} to [POSITIVE] if set to -1, the last block will be the latest block in ledger
- * @param {number} offset [POSITIVE] the delta value, the first result block number = (to - offset). if set to 0 => only 1 block
+ * Lấy các danh sách các block
+ * @param {number} to [POSITIVE] index của block cuối cùng trong danh sách truy vấn. Nếu set = -1, block 'to' sẽ là block mới nhất trong Ledger
+ * @param {number} offset [POSITIVE] block đầu tiên sẽ  block thứ 'to' - 'offset' trong ledger. Nếu set = 0 => chỉ lấy 1 block.
  * @param {string} peer 
- * @param {string} channelName 
+ * @param {string} channelName
  * @param {string} orgName 
  * @param {string} username 
  */
@@ -509,10 +511,18 @@ async function getBlockList(to, offset, peer, channelName, orgName, username) {
 
         if (latestBlock) blockList.push(latestBlock);
 
-        return blockList;
+        return {
+            success: true,
+            blocks: blockList,
+            msg: ''
+        };
     } catch (err) {
         logger.error('Failed to query due to error: ' + err.stack ? err.stack : err);
-        return err.toString();
+        return {
+            success: false,
+            blocks: [],
+            msg: err.toString()
+        };
     } finally {
         // (4) Close channel
         if (channel) {
@@ -550,6 +560,12 @@ async function queryTransaction(peer, channelName, orgName, username) {
     }
 }
 
+/**
+ * 
+ * @param {*} channelName 
+ * @param {*} orgName 
+ * @param {*} username 
+ */
 async function getChannelDiscoveryResults(channelName, orgName, username) {
     let channel = null;
 
@@ -589,7 +605,6 @@ async function getChannelDiscoveryResults(channelName, orgName, username) {
 
 }
 
-
 exports.queryChaincode = query;
 exports.queryInfo = queryInfo;
 exports.queryBlockByHash = queryBlockByHash;
@@ -603,4 +618,4 @@ exports.getChannels = getChannels;
 exports.getChannelByName = getChannelByName;
 exports.getOrgChannelList = getOrgChannelList;
 exports.getChannelDiscoveryResults = getChannelDiscoveryResults;
-exports.getChannelListNotJoined = getChannelListNotJoined;
+exports.getChannelListSameOrg = getChannelListSameOrg;

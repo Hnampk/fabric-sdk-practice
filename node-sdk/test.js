@@ -58,7 +58,7 @@ async function start() {
      *  (7) Invoke chaincode
      */
     // await createChannel.createChannel("mychannel", "../../fabric/channel-artifacts/channel.tx", "Org1");
-    await getRegisteredUser.getRegisteredUser("Tom", "Org1", true);
+    // await getRegisteredUser.getRegisteredUser("Tom", "Org1", true);
     // await getRegisteredUser.getRegisteredUser("Jim", "Org2", true);
     // await joinChannel.joinChannel("mychannel", ["peer0.org1.example.com", "peer1.org1.example.com"], "Org1", "Tom");
     // await joinChannel.joinChannel("mychannel", ["peer0.org2.example.com"], "Org2", "Jim");
@@ -80,7 +80,7 @@ async function start() {
 
 
     // let a = await query.getChannelDiscoveryResults('mychannel', 'Org1', 'Tom');
-    await query.getChannelListNotJoined('peer0.org1.example.com', 'Org1', 'Tom');
+    // await query.getChannelListNotJoined('peer0.org1.example.com', 'Org1', 'Tom');
 
     /**
      * Join New Peer of an existing Org into channel
@@ -120,9 +120,9 @@ async function start() {
     // await query.getOrgs("mychannel", "Org1", "Tom");
 
     // try {
-    //     let blockList = await query.getBlockList(-1, 10, "peer0.org1.example.com", "mychannel", "Org1", "Tom");
-
-    //     let block = blockList[1];
+        let blockList = await query.getBlockList(12, 1, "peer0.org1.example.com", "mychannel", "Org1", "Tom");
+        console.log(blockList)
+        // let block = blockList[1];
     //     console.log(block, block.data.data[0].payload)
     // } catch (err) {
     //     console.log("ERROR: ", err);
