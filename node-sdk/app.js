@@ -275,11 +275,12 @@ app.post('/channels/:channelName/peers', async function (req, res) {
 	res.json(message);
 });
 
-// Get Channel Discovery Results
-app.post('/discover/:channelName', async (req, res) => {
+// Get getChannelDiscoveryResults
+app.get('/discover/:channelName', async (req, res) => {
 	logger.info('<<<<<<<<<<<<<<<<< DISCOVER CHANNEL >>>>>>>>>>>>>>>>>');
 
 	var channelName = req.params.channelName;
+	var peer = req.query.peer;
 
 	logger.debug('channelName : ' + channelName);
 	logger.debug('username :' + req.username);
@@ -290,7 +291,7 @@ app.post('/discover/:channelName', async (req, res) => {
 		return;
 	}
 
-	let message = await query.getChannelDiscoveryResults(channelName, req.orgname, req.username);
+	let message = await query.getChannelDiscoveryResults(channelName, req.orgname, req.username, peer);
 	res.json(message);
 });
 

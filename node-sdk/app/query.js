@@ -494,7 +494,11 @@ async function getBlockList(to, offset, peer, channelName, orgName, username) {
             let result = await channel.queryInfo();
 
             let latestBlockBuffer = result.currentBlockHash.toBuffer();
-            latestBlock = await channel.queryBlockByHash(latestBlockBuffer, peer)
+            if (peer) {
+                latestBlock = await channel.queryBlockByHash(latestBlockBuffer, peer)
+            } else {
+                latestBlock = await channel.queryBlockByHash(latestBlockBuffer)
+            }
 
             to = latestBlock.header.number;
             from = (to - offset <= 0) ? 0 : (to - offset);
@@ -504,7 +508,13 @@ async function getBlockList(to, offset, peer, channelName, orgName, username) {
         }
 
         for (let i = from; i <= to; i++) {
-            let block = await channel.queryBlock(i, peer);
+            let block;
+            if (peer) {
+                block = await channel.queryBlock(i, peer);
+            } else {
+                block = await channel.queryBlock(i);
+            }
+
 
             blockList.push(block);
         }
@@ -566,7 +576,7 @@ async function queryTransaction(peer, channelName, orgName, username) {
  * @param {*} orgName 
  * @param {*} username 
  */
-async function getChannelDiscoveryResults(channelName, orgName, username) {
+async function getChannelDiscoveryResults(channelName, orgName, username, peer) {
     let channel = null;
 
     try {
@@ -581,21 +591,36 @@ async function getChannelDiscoveryResults(channelName, orgName, username) {
             throw new Error(message)
         }
 
-        await channel.initialize({
-            discover: true,
-            asLocalhost: true
-        });
+        if(peer){
+            await channel.initialize({
+                discover: true,
+                asLocalhost: true,
+                target: peer
+            });
+        }else{
+            await channel.initialize({
+                discover: true,
+                asLocalhost: true,
+            });
+        }
 
         let something = await channel.getDiscoveryResults();
 
         return {
-            orderers: something.orderers,
-            peers_by_org: something.peers_by_org,
-            endorsement_plans: something.endorsement_plans
+            success: true,
+            result: {
+                orderers: something.orderers,
+                peers_by_org: something.peers_by_org,
+                endorsement_plans: something.endorsement_plans
+            },
+            msg: ''
         }
     } catch (err) {
         logger.error('Failed to query due to error: ' + err.stack ? err.stack : err);
-        return err.toString();
+        return {
+            success: false,
+            msg: err.toString()
+        };
     } finally {
         // (4) Close channel
         if (channel) {
