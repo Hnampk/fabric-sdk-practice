@@ -2,6 +2,7 @@ var sha = require('js-sha256');
 var asn = require('asn1.js');
 
 var calculateBlockHash = function (header) {
+
     let headerAsn = asn.define('headerAsn', function () {
         this.seq().obj(
             this.key('Number').int(),

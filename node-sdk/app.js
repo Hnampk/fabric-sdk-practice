@@ -311,6 +311,5 @@ app.get('/channels/:channelName/blocks', async (req, res) => {
 	logger.debug('query details: to: %s, offset: %s, peer: %s', to, offset, peer);
 
 	let result = await query.getBlockList(to, offset, peer, channelName, req.orgname, req.username);
-	console.log(result)
 	res.json(result);
 });

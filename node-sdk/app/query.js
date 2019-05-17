@@ -2,6 +2,7 @@
 
 var util = require('util');
 var helper = require('./helper.js');
+var utils = require('./utils.js')
 const agent = require('superagent-promise')(require('superagent'), Promise);
 var logger = helper.getLogger('Query');
 
@@ -491,6 +492,7 @@ async function getBlockList(to, offset, peer, channelName, orgName, username) {
 
         let latestBlock = null;
         if ((!to) || (to < 0)) {
+            // Nếu to = -1 => lấy đến block cuối cùng
             let result = await channel.queryInfo();
 
             let latestBlockBuffer = result.currentBlockHash.toBuffer();
@@ -507,19 +509,28 @@ async function getBlockList(to, offset, peer, channelName, orgName, username) {
             from = (to - offset <= 0) ? 0 : (to - offset);
         }
 
-        for (let i = from; i <= to; i++) {
-            let block;
-            if (peer) {
+        if (peer) {
+            for (let i = from; i <= to; i++) {
+                let block;
+
                 block = await channel.queryBlock(i, peer);
-            } else {
-                block = await channel.queryBlock(i);
+                block.blockHash = utils.calculateBlockHash(block.header);
+                blockList.push(block);
             }
+        } else {
+            for (let i = from; i <= to; i++) {
+                let block;
 
-
-            blockList.push(block);
+                block = await channel.queryBlock(i);
+                block.blockHash = utils.calculateBlockHash(block.header);
+                blockList.push(block);
+            }
         }
 
-        if (latestBlock) blockList.push(latestBlock);
+        if (latestBlock){
+            latestBlock.blockHash = utils.calculateBlockHash(latestBlock.header);
+            blockList.push(latestBlock);
+        }
 
         return {
             success: true,
@@ -591,13 +602,14 @@ async function getChannelDiscoveryResults(channelName, orgName, username, peer) 
             throw new Error(message)
         }
 
-        if(peer){
+        if (peer) {
             await channel.initialize({
                 discover: true,
                 asLocalhost: true,
                 target: peer
             });
-        }else{
+        } else {
+            // default peer: peer0.org1.example.com
             await channel.initialize({
                 discover: true,
                 asLocalhost: true,
@@ -605,6 +617,8 @@ async function getChannelDiscoveryResults(channelName, orgName, username, peer) 
         }
 
         let something = await channel.getDiscoveryResults();
+
+        console.log(something.peers_by_org.Org2MSP)
 
         return {
             success: true,
