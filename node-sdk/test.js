@@ -114,7 +114,7 @@ async function start() {
 
 
     // await query.queryInfo("peer0.org1.example.com", "mychannel", "Org1", "Tom");
-    // await query.queryBlockByHash("peer0.org1.example.com", "8243d533b8da74812e3adbd116cfd6ca16b0ddbdd2ecb97af1a4aa009f7cae0b", "mychannel", "Org1", "Tom");
+    await query.queryBlockByHash("peer0.org1.example.com", "6cf9cdea21efb0903f3447a583c245bf8d34816facab55343a908bb6cdebb6ad", "mychannel", "Org1", "Tom");
     // await query.getPeers("mychannel", "Org1", "Tom");
     // await query.getChannelList('peer0.org1.example.com', 'Org1', 'Tom');
     // await query.getPeersForOrg("Org1", 'Tom');
@@ -131,9 +131,9 @@ async function start() {
 
     // await query.queryTransaction("peer0.org1.example.com", "mychannel", "Org1", "Tom");
 
-    for(let i = 0; i < 3; i++){
-        invokeChaincode.invokeChaincode(["peer0.org1.example.com", "peer0.org2.example.com"], "mycc", "move", ["a", "b", "10"], "mychannel", "Org1", "Tom");
-    }
+    // for(let i = 0; i < 111; i++){
+    //     invokeChaincode.invokeChaincode(["peer0.org1.example.com", "peer0.org2.example.com"], "mycc", "move", ["a", "b", "10"], "mychannel", "Org1", "Tom");
+    // }
 
 }
 

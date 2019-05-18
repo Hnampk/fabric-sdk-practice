@@ -313,3 +313,21 @@ app.get('/channels/:channelName/blocks', async (req, res) => {
 	let result = await query.getBlockList(to, offset, peer, channelName, req.orgname, req.username);
 	res.json(result);
 });
+
+// Query queryBlockByHash
+app.get('/channels/:channelName/block/:blockHash', async (req, res) => {
+	logger.info('<<<<<<<<<<<<<<<<< QUERY BLOCKS >>>>>>>>>>>>>>>>>');
+
+	var channelName = req.params.channelName;
+	var blockHash = req.params.blockHash;
+	var peer = req.query.peer;
+
+	logger.debug('channelName : ' + channelName);
+	logger.debug('peer : ' + peer);
+	logger.debug('username :' + req.username);
+	logger.debug('orgname:' + req.orgname);
+	logger.debug('blockHash: ' + blockHash);
+
+	let result = await query.queryBlockByHash(peer, blockHash, channelName, req.orgname, req.username);
+	res.json(result);
+});

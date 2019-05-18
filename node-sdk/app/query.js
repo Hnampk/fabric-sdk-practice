@@ -167,14 +167,21 @@ async function queryBlockByHash(peer, hash, channelName, orgName, username) {
             throw new Error(message)
         }
 
-        let results = await channel.queryBlockByHash(Buffer.from(hash, 'hex'), peer);
+        let result = await channel.queryBlockByHash(Buffer.from(hash, 'hex'), peer);
 
-        console.log(results.data.data);
-
+        console.log(result.data.data);
+        return {
+            success: true,
+            result: result,
+            msg: ''
+        }
 
     } catch (err) {
         logger.error('Failed to query due to error: ' + err.stack ? err.stack : err);
-        return err.toString();
+        return {
+            success: false,
+            msg: err.toString()
+        };
     } finally {
         // (4) Close channel
         if (channel) {
