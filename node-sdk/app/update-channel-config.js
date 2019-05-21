@@ -11,14 +11,61 @@ const requester = require('request');
 var helper = require('./helper.js');
 var logger = helper.getLogger('Update-channel-config');
 
+async function getChannelConfig(channelName, orgName, username) {
+    let channel = null
+
+    try {
+        // (1) Thiết lập client của Org
+        let client = await helper.getClientForOrg(orgName, username);
+
+        // (2) Thiết lập instance của channel và kiểm tra thông tin
+        channel = await client.getChannel(channelName);
+        if (!channel) {
+            let message = util.format('Channel %s was not defined in the connection profile', channelName);
+            logger.error(message);
+            throw new Error(message);
+        }
+
+        // (3) Lấy config mới nhất của Orderer
+        let configEnvelope = await channel.getChannelConfigFromOrderer();
+        let originalConfigProto = configEnvelope.config.toBuffer(); // Lưu lại config gốc
+
+
+        // (4) Chỉnh sửa config
+        // Sử dụng tool configtxlator để convert config sang json
+        let response = await agent.post('http://127.0.0.1:7059/protolator/decode/common.Config',
+            originalConfigProto).buffer();
+
+        let originalConfigJson = response.text.toString(); // config định dạng json
+
+        return {
+            success: true,
+            result: originalConfigJson,
+            msg: ''
+        };
+    } catch (e) {
+        console.log(e);
+        return {
+            success: false,
+            msg: e
+        };
+    } finally {
+        // ( ) Close channel
+        if (channel) {
+            channel.close();
+        }
+    }
+}
+
 /**
  * Cập nhật số  transaction tối đa bên trong 01 block
- * @param {number} value Số transaction tối đa
+ * @param {{absolute_max_bytes: number, max_message_count: number, preferred_max_bytes: number}} batchSize BatchSize
+ * @param {string} batchTimeout
  * @param {string} channelName 
  * @param {string} orgName 
  * @param {string} username 
  */
-async function modifyBatchSize(value, channelName, orgName, username) {
+async function modifyChannelBatchConfig(channelName, batchSize, batchTimeout, orgName, username) {
     /**
      *  TODO:
      *  (1) Thiết lập client của Org
@@ -28,7 +75,7 @@ async function modifyBatchSize(value, channelName, orgName, username) {
      *  (5) Thực hiện update
      *  (6) Close channel
      */
-
+    
     let channel = null;
 
     try {
@@ -58,7 +105,10 @@ async function modifyBatchSize(value, channelName, orgName, username) {
 
         // Chỉnh sửa!
         let updatedConfig = JSON.parse(updatedConfigJson); // chuyển sang dạng object để chỉnh sửa
-        updatedConfig.channel_group.groups.Orderer.values.BatchSize.value.max_message_count = value;
+        updatedConfig.channel_group.groups.Orderer.values.BatchSize.value.absolute_max_bytes = batchSize.absoluteMaxBytes;
+        updatedConfig.channel_group.groups.Orderer.values.BatchSize.value.max_message_count = batchSize.maxMessageCount;
+        updatedConfig.channel_group.groups.Orderer.values.BatchSize.value.preferred_max_bytes = batchSize.preferredMaxBytes;
+        updatedConfig.channel_group.groups.Orderer.values.BatchTimeout.value.timeout = batchTimeout.timeout;
         updatedConfigJson = JSON.stringify(updatedConfig);
 
         // Sử dụng tool configtxlator để convert lại proto config
@@ -83,7 +133,7 @@ async function modifyBatchSize(value, channelName, orgName, username) {
                     contentType: 'application/octet-stream'
                 }
             }
-        };
+        };3
 
         // Sử dụng tool configtxlator để tìm phần chỉnh sửa
         // Kết quả nhận được sẽ dùng để ký và gửi đển orderer update
@@ -124,14 +174,35 @@ async function modifyBatchSize(value, channelName, orgName, username) {
         };
 
         try {
+            console.log("???")
             // Thực hiện update channel config
             let result = await client.updateChannel(request);
-            console.log("result", result);
+            console.log(result);
+
+            if(result.status != 'SUCCESS'){
+                return {
+                    success: false,
+                    msg: result.info
+                }
+            }
+            return {
+                success: true,
+                result: result,
+                msg: ''
+            }
         } catch (error) {
             console.log(error);
+            return {
+                success: false,
+                msg: error
+            }
         }
     } catch (err) {
-
+        console.log(error);
+        return {
+            success: false,
+            msg: error
+        }
     } finally {
         // ( ) Close channel
         if (channel) {
@@ -140,18 +211,5 @@ async function modifyBatchSize(value, channelName, orgName, username) {
     }
 }
 
-async function modifyBatchTimeOut(value, channelName, orgName, username) {
-    /**
-     *  TODO:
-     *  (1) Thiết lập client của Org
-     *  (2) Thiết lập instance của channel và kiểm tra thông tin
-     *  (3) Lấy config mới nhất của Orderer
-     *  (4) Chỉnh sửa config
-     *  (5) Thực hiện update
-     *  (6) Close channel
-     */
-
-}
-
-exports.modifyBatchSize = modifyBatchSize;
-exports.modifyBatchTimeOut = modifyBatchTimeOut;
+exports.modifyChannelBatchConfig = modifyChannelBatchConfig;
+exports.getChannelConfig = getChannelConfig;

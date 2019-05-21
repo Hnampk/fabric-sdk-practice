@@ -19,6 +19,7 @@ var getRegisteredUser = require('./app/get-registered-user.js');
 var query = require('./app/query.js');
 var createChannel = require('./app/create-channel.js');
 var joinChannel = require('./app/join-channel.js');
+var updateChannelConfig = require('./app/update-channel-config.js');
 
 
 var host = process.env.HOST || hfc.getConfigSetting('host');
@@ -275,24 +276,37 @@ app.post('/channels/:channelName/peers', async function (req, res) {
 	res.json(message);
 });
 
-// Get getChannelDiscoveryResults
-app.get('/discover/:channelName', async (req, res) => {
-	logger.info('<<<<<<<<<<<<<<<<< DISCOVER CHANNEL >>>>>>>>>>>>>>>>>');
+// getChannelConfig
+app.get('/channels/:channelName/config', async (req, res) => {
+	logger.info('<<<<<<<<<<<<<<<<< QUERY CHANNEL CONFIG >>>>>>>>>>>>>>>>>');
 
 	var channelName = req.params.channelName;
-	var peer = req.query.peer;
 
 	logger.debug('channelName : ' + channelName);
 	logger.debug('username :' + req.username);
 	logger.debug('orgname:' + req.orgname);
 
-	if (!channelName) {
-		res.json(getErrorMessage('\'channelName\''));
-		return;
-	}
+	let result = await updateChannelConfig.getChannelConfig(channelName, req.orgname, req.username);
+	res.json(result);
+});
 
-	let message = await query.getChannelDiscoveryResults(channelName, req.orgname, req.username, peer);
-	res.json(message);
+// updateChannelConfig
+app.post('/channels/:channelName/config', async (req, res) => {
+	logger.info('<<<<<<<<<<<<<<<<< UPDATE CHANNEL CONFIG >>>>>>>>>>>>>>>>>');
+
+	var channelName = req.params.channelName;
+	var batchSize = req.body.batchSize;
+	var batchTimeout = req.body.batchTimeout;
+
+	logger.debug('channelName : ' + channelName);
+	logger.debug('username :' + req.username);
+	logger.debug('orgname:' + req.orgname);
+	logger.debug('batchSize:' + batchSize);
+	logger.debug('batchTimeout:' + batchTimeout);
+
+	let result = await updateChannelConfig.modifyChannelBatchConfig(channelName, batchSize, batchTimeout, req.orgname, req.username);
+	res.json(result);
+
 });
 
 // Query blocks
@@ -330,4 +344,24 @@ app.get('/channels/:channelName/block/:blockHash', async (req, res) => {
 
 	let result = await query.queryBlockByHash(peer, blockHash, channelName, req.orgname, req.username);
 	res.json(result);
+});
+
+// Get getChannelDiscoveryResults
+app.get('/discover/:channelName', async (req, res) => {
+	logger.info('<<<<<<<<<<<<<<<<< DISCOVER CHANNEL >>>>>>>>>>>>>>>>>');
+
+	var channelName = req.params.channelName;
+	var peer = req.query.peer;
+
+	logger.debug('channelName : ' + channelName);
+	logger.debug('username :' + req.username);
+	logger.debug('orgname:' + req.orgname);
+
+	if (!channelName) {
+		res.json(getErrorMessage('\'channelName\''));
+		return;
+	}
+
+	let message = await query.getChannelDiscoveryResults(channelName, req.orgname, req.username, peer);
+	res.json(message);
 });
