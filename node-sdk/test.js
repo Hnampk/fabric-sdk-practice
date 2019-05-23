@@ -16,15 +16,6 @@ var updateChannelConfig = require('./app/update-channel-config');
 var addNewOrg = require('./app/add-new-org.js');
 var utils = require('./app/utils.js');
 
-// var helper = require('./raw-app/helper.js');
-// var createChannel = require('./raw-app/create-channel.js');
-// var join = require('./raw-app/join-channel.js');
-// var updateAnchorPeers = require('./raw-app/update-anchor-peers.js');
-// var install = require('./raw-app/install-chaincode.js');
-// var instantiate = require('./raw-app/instantiate-chaincode.js');
-// var invoke = require('./raw-app/invoke-transaction.js');
-// var query = require('./raw-app/query.js');
-
 
 
 /**
@@ -57,18 +48,18 @@ async function start() {
      *  (6) Query chaincode
      *  (7) Invoke chaincode
      */
-    // await createChannel.createChannel("mychannel", "../../fabric/channel-artifacts/channel.tx", "Org1");
+    await createChannel.createChannel("mychannel", "../../fabric/channel-artifacts/channel.tx", "Org1");
     await getRegisteredUser.getRegisteredUser("Tom", "Org1", true);
-    // await getRegisteredUser.getRegisteredUser("Jim", "Org2", true);
-    // await joinChannel.joinChannel("mychannel", ["peer0.org1.example.com", "peer1.org1.example.com"], "Org1", "Tom");
-    // await joinChannel.joinChannel("mychannel", ["peer0.org2.example.com"], "Org2", "Jim");
-    // await updateAnchorPeers.updateAnchorPeers("mychannel", "../../fabric/channel-artifacts/Org1MSPanchors.tx", "Tom", "Org1");
-    // await updateAnchorPeers.updateAnchorPeers("mychannel", "../../fabric/channel-artifacts/Org2MSPanchors.tx", "Jim", "Org2");
-    // await installChaincode.installChaincode(["peer0.org1.example.com", "peer1.org1.example.com"], "mycc", "github.com/example_cc/go", "v0", "golang", "Org1", "Tom");
-    // await installChaincode.installChaincode(["peer0.org2.example.com"], "mycc", "github.com/example_cc/go", "v0", "golang", "Org2", "Jim");
-    // await instantiateChaincode.instantiateChaincode(["peer0.org1.example.com", "peer1.org1.example.com"], "mychannel", "mycc", "v0", "golang", "init", ["a", "100", "b", "200"], "Org1", "Tom");
-    // await query.queryChaincode(["peer0.org1.example.com", "peer1.org1.example.com"], 'mycc', 'query', ['a'], 'mychannel', 'Org1', 'Tom');
-    // await invokeChaincode.invokeChaincode(["peer0.org1.example.com", "peer0.org2.example.com"], "mycc", "move", ["a", "b", "10"], "mychannel", "Org1", "Tom");
+    await getRegisteredUser.getRegisteredUser("Jim", "Org2", true);
+    await joinChannel.joinChannel("mychannel", ["peer0.org1.example.com", "peer1.org1.example.com"], "Org1", "Tom");
+    await joinChannel.joinChannel("mychannel", ["peer0.org2.example.com"], "Org2", "Jim");
+    await updateAnchorPeers.updateAnchorPeers("mychannel", "../../fabric/channel-artifacts/Org1MSPanchors.tx", "Tom", "Org1");
+    await updateAnchorPeers.updateAnchorPeers("mychannel", "../../fabric/channel-artifacts/Org2MSPanchors.tx", "Jim", "Org2");
+    await installChaincode.installChaincode(["peer0.org1.example.com", "peer1.org1.example.com"], "mycc", "github.com/example_cc/go", "v0", "golang", "Org1", "Tom");
+    await installChaincode.installChaincode(["peer0.org2.example.com"], "mycc", "github.com/example_cc/go", "v0", "golang", "Org2", "Jim");
+    await instantiateChaincode.instantiateChaincode(["peer0.org1.example.com", "peer1.org1.example.com"], "mychannel", "mycc", "v0", "golang", "init", ["a", "100", "b", "200"], "Org1", "Tom");
+    await query.queryChaincode(["peer0.org1.example.com", "peer1.org1.example.com"], 'mycc', 'query', ['a'], 'mychannel', 'Org1', 'Tom');
+    await invokeChaincode.invokeChaincode(["peer0.org1.example.com", "peer0.org2.example.com"], "mycc", "move", ["a", "b", "10"], "mychannel", "Org1", "Tom");
 
     // await query.getChannelList("peer0.org1.example.com", "Org1", "Tom");
     // await query.getOrgChannelList( "Org1", "Tom");
@@ -92,13 +83,13 @@ async function start() {
      * Update channel config
      *  (i) Modify channel Batchsize
      */
-    await updateChannelConfig.modifyChannelBatchConfig('mychannel', {
-        "absoluteMaxBytes": 102760448,
-        "maxMessageCount": 10,
-        "preferredMaxBytes": 102760448
-    }, {
-		"timeout": "1.5s"
-    }, 'Org1', 'Tom');
+    // await updateChannelConfig.modifyChannelBatchConfig('mychannel', {
+    //     "absoluteMaxBytes": 102760448,
+    //     "maxMessageCount": 10,
+    //     "preferredMaxBytes": 102760448
+    // }, {
+	// 	"timeout": "1.5s"
+    // }, 'Org1', 'Tom');
 
 
     /**
@@ -137,9 +128,9 @@ async function start() {
 
     // await query.queryTransaction("peer0.org1.example.com", "mychannel", "Org1", "Tom");
 
-    // for (let i = 0; i < 102; i++) {
-    //     invokeChaincode.invokeChaincode(["peer0.org1.example.com", "peer0.org2.example.com"], "mycc", "move", ["a", "b", "10"], "mychannel", "Org1", "Tom");
-    // }
+    for (let i = 0; i < 22; i++) {
+        invokeChaincode.invokeChaincode(["peer0.org1.example.com", "peer0.org2.example.com"], "mycc", "move", ["a", "b", "10"], "mychannel", "Org1", "Tom");
+    }
 
 }
 

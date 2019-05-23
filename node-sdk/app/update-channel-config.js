@@ -33,7 +33,7 @@ async function getChannelConfig(channelName, orgName, username) {
 
         // (4) Chỉnh sửa config
         // Sử dụng tool configtxlator để convert config sang json
-        let response = await agent.post('http://127.0.0.1:7059/protolator/decode/common.Config',
+        let response = await agent.post(hfc.getConfigSetting('configtxlator') + '/protolator/decode/common.Config',
             originalConfigProto).buffer();
 
         let originalConfigJson = response.text.toString(); // config định dạng json
