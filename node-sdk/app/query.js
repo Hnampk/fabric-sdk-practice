@@ -254,7 +254,13 @@ async function getChannelListSameOrg(peer, orgName, username) {
         };
 
         // Lấy danh sách các Peer khác trong cùng Org
-        let peerList = await getPeersForOrg(orgName, username);
+        let peerListResponse = await getPeersForOrg(orgName, username);
+        
+        if(!peerListResponse.success){
+            throw new Error("Can not getPeersForOrg")
+        }
+
+        let peerList = peerListResponse.result;
         let peerIndex = peerList.indexOf(peer);
 
         if (peerIndex > -1)
@@ -409,12 +415,19 @@ async function getPeersForOrg(orgName, username) {
 
         let peers = client.getPeersForOrg(orgName + "MSP");
 
-        return peers.map(peer => {
-            return peer.getName();
-        });
+        return {
+            success: true,
+            result: peers.map(peer => {
+                return peer.getName();
+            }),
+            msg: ""
+        };
     } catch (err) {
         logger.error('Failed to query due to error: ' + err.stack ? err.stack : err);
-        return err.toString();
+        return {
+            success: false,
+            msg: err.toString()
+        };
     }
 }
 
@@ -445,20 +458,24 @@ async function getPeers(channelName, orgName, username) {
         let peerLists = [];
         results.forEach(async (peer) => {
             // waitForReady(peer.getPeer()); // for peer status but not ok yet!. From fabric-client/lib/Remote.js
-
+            // console.log(peer);
             peerLists.push({
                 name: peer.getName(),
                 mspid: peer.getMspid(),
             });
         });
-        console.log(peerLists);
 
-
-
-
+        return {
+            success: true,
+            result: peerLists,
+            msg: ''
+        };
     } catch (err) {
         logger.error('Failed to query due to error: ' + err.stack ? err.stack : err);
-        return err.toString();
+        return {
+            success: false,
+            msg: err.toString()
+        };
     } finally {
         // (4) Close channel
         if (channel) {
@@ -534,7 +551,7 @@ async function getBlockList(to, offset, peer, channelName, orgName, username) {
             }
         }
 
-        if (latestBlock){
+        if (latestBlock) {
             latestBlock.blockHash = utils.calculateBlockHash(latestBlock.header);
             blockList.push(latestBlock);
         }
