@@ -48,18 +48,18 @@ async function start() {
      *  (6) Query chaincode
      *  (7) Invoke chaincode
      */
-    // await createChannel.createChannel("mychannel", "../../fabric/channel-artifacts/channel.tx", "Org1");
-    // await getRegisteredUser.getRegisteredUser("Tom", "Org1", true);
-    // await getRegisteredUser.getRegisteredUser("Jim", "Org2", true);
-    // await joinChannel.joinChannel("mychannel", ["peer0.org1.example.com", "peer1.org1.example.com"], "Org1", "Tom");
-    // await joinChannel.joinChannel("mychannel", ["peer0.org2.example.com"], "Org2", "Jim");
-    // await updateAnchorPeers.updateAnchorPeers("mychannel", "../../fabric/channel-artifacts/Org1MSPanchors.tx", "Tom", "Org1");
-    // await updateAnchorPeers.updateAnchorPeers("mychannel", "../../fabric/channel-artifacts/Org2MSPanchors.tx", "Jim", "Org2");
-    // await installChaincode.installChaincode(["peer0.org1.example.com", "peer1.org1.example.com"], "mycc", "github.com/example_cc/go", "v0", "golang", "Org1", "Tom");
-    // await installChaincode.installChaincode(["peer0.org2.example.com"], "mycc", "github.com/example_cc/go", "v0", "golang", "Org2", "Jim");
-    // await instantiateChaincode.instantiateChaincode(["peer0.org1.example.com", "peer1.org1.example.com"], "mychannel", "mycc", "v0", "golang", "init", ["a", "100", "b", "200"], "Org1", "Tom");
-    // await query.queryChaincode(["peer0.org1.example.com", "peer1.org1.example.com"], 'mycc', 'query', ['a'], 'mychannel', 'Org1', 'Tom');
-    // await invokeChaincode.invokeChaincode(["peer0.org1.example.com", "peer0.org2.example.com"], "mycc", "move", ["a", "b", "10"], "mychannel", "Org1", "Tom");
+    await createChannel.createChannel("mychannel", "../../fabric/channel-artifacts/channel.tx", "Org1");
+    await getRegisteredUser.getRegisteredUser("Tom", "Org1", true);
+    await getRegisteredUser.getRegisteredUser("Jim", "Org2", true);
+    await joinChannel.joinChannel("mychannel", ["peer0.org1.example.com", "peer1.org1.example.com"], "Org1", "Tom");
+    await joinChannel.joinChannel("mychannel", ["peer0.org2.example.com"], "Org2", "Jim");
+    await updateAnchorPeers.updateAnchorPeers("mychannel", "../../fabric/channel-artifacts/Org1MSPanchors.tx", "Tom", "Org1");
+    await updateAnchorPeers.updateAnchorPeers("mychannel", "../../fabric/channel-artifacts/Org2MSPanchors.tx", "Jim", "Org2");
+    await installChaincode.installChaincode(["peer0.org1.example.com", "peer1.org1.example.com"], "mycc", "github.com/example_cc/go", "v0", "golang", "Org1", "Tom");
+    await installChaincode.installChaincode(["peer0.org2.example.com"], "mycc", "github.com/example_cc/go", "v0", "golang", "Org2", "Jim");
+    await instantiateChaincode.instantiateChaincode(["peer0.org1.example.com", "peer1.org1.example.com"], "mychannel", "mycc", "v0", "golang", "init", ["a", "100", "b", "200"], "Org1", "Tom");
+    await query.queryChaincode(["peer0.org1.example.com", "peer1.org1.example.com"], 'mycc', 'query', ['a'], 'mychannel', 'Org1', 'Tom');
+    await invokeChaincode.invokeChaincode(["peer0.org1.example.com", "peer0.org2.example.com"], "mycc", "move", ["a", "b", "10"], "mychannel", "Org1", "Tom");
 
     // await query.getChannelList("peer0.org1.example.com", "Org1", "Tom");
     // await query.getOrgChannelList( "Org1", "Tom");
@@ -112,7 +112,7 @@ async function start() {
 
     // await query.queryInfo("peer0.org1.example.com", "mychannel", "Org1", "Tom");
     // await query.queryBlockByHash("peer0.org1.example.com", "6cf9cdea21efb0903f3447a583c245bf8d34816facab55343a908bb6cdebb6ad", "mychannel", "Org1", "Tom");
-    await query.getPeers("mychannel", "Org1", "Tom");
+    // await query.getPeers("mychannel", "Org1", "Tom");
     // await query.getChannelList('peer0.org1.example.com', 'Org1', 'Tom');
     // await query.getPeersForOrg("Org1", 'Tom');
     // await query.getOrgs("mychannel", "Org1", "Tom");
@@ -128,9 +128,9 @@ async function start() {
 
     // await query.queryTransaction("peer0.org1.example.com", "mychannel", "Org1", "Tom");
 
-    // for (let i = 0; i < 22; i++) {
-    //     invokeChaincode.invokeChaincode(["peer0.org1.example.com", "peer0.org2.example.com"], "mycc", "move", ["a", "b", "10"], "mychannel", "Org1", "Tom");
-    // }
+    for (let i = 0; i < 22; i++) {
+        invokeChaincode.invokeChaincode(["peer0.org1.example.com", "peer0.org2.example.com"], "mycc", "move", ["a", "b", "10"], "mychannel", "Org1", "Tom");
+    }
 
 }
 
