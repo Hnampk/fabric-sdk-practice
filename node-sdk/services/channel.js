@@ -368,7 +368,64 @@ async function modifyChannelBatchConfig(channelName, batchSize, batchTimeout, or
     }
 }
 
+async function getChannelDiscoveryResults(channelName, orgName, username, peer) {
+    let channel = null;
+
+    try {
+        // (1) Thiết lập client của Org
+        let client = await helper.getClientForOrg(orgName, username);
+
+        // (2) Thiết lập instance của channel và kiểm tra thông tin
+        channel = client.getChannel(channelName);
+        if (!channel) {
+            let message = util.format('Channel %s was not defined in the connection profile', channelName);
+            logger.error(message);
+            throw new Error(message)
+        }
+
+        if (peer) {
+            await channel.initialize({
+                discover: true,
+                asLocalhost: true,
+                target: peer
+            });
+        } else {
+            // default peer: peer0.org1.example.com
+            await channel.initialize({
+                discover: true,
+                asLocalhost: true,
+            });
+        }
+
+        let something = await channel.getDiscoveryResults();
+
+
+        return {
+            success: true,
+            result: {
+                orderers: something.orderers,
+                peers_by_org: something.peers_by_org,
+                endorsement_plans: something.endorsement_plans
+            },
+            msg: ''
+        }
+    } catch (err) {
+        logger.error('Failed to query due to error: ' + err.stack ? err.stack : err);
+        return {
+            success: false,
+            msg: err.toString()
+        };
+    } finally {
+        // (4) Close channel
+        if (channel) {
+            channel.close();
+        }
+    }
+
+}
+
 exports.createChannel = createChannel;
 exports.joinChannel = joinChannel;
 exports.getChannelBatchConfig = getChannelBatchConfig;
 exports.modifyChannelBatchConfig = modifyChannelBatchConfig;
+exports.getChannelDiscoveryResults = getChannelDiscoveryResults;

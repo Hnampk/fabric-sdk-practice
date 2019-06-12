@@ -255,8 +255,8 @@ async function getChannelListSameOrg(peer, orgName, username) {
 
         // Lấy danh sách các Peer khác trong cùng Org
         let peerListResponse = await getPeersForOrg(orgName, username);
-        
-        if(!peerListResponse.success){
+
+        if (!peerListResponse.success) {
             throw new Error("Can not getPeersForOrg")
         }
 
@@ -272,7 +272,7 @@ async function getChannelListSameOrg(peer, orgName, username) {
             // Với mỗi Peer, lấy danh sách các Channel đã join
             let channels = await getChannelList(otherPeer, orgName, username);
 
-            if (typeof (channels) == 'string') {
+            if (typeof(channels) == 'string') {
                 result.success = false;
                 // lỗi
                 result.msg.push(channels);
@@ -316,7 +316,7 @@ async function getOrgChannelList(orgName, username) {
             let peer = peers[i];
             let peerChannels = await getChannelList(peer, orgName, username);
 
-            if (typeof (peerChannels) == 'object') {
+            if (typeof(peerChannels) == 'object') {
                 for (let j = 0; j < peerChannels.length; j++) {
                     let channel = peerChannels[j];
                     let exist = channelList.findIndex(channelName => {
@@ -456,7 +456,7 @@ async function getPeers(channelName, orgName, username) {
         let results = channel.getChannelPeers();
 
         let peerLists = [];
-        results.forEach(async (peer) => {
+        results.forEach(async(peer) => {
             // waitForReady(peer.getPeer()); // for peer status but not ok yet!. From fabric-client/lib/Remote.js
             // console.log(peer);
             peerLists.push({
@@ -642,7 +642,6 @@ async function getChannelDiscoveryResults(channelName, orgName, username, peer) 
 
         let something = await channel.getDiscoveryResults();
 
-        console.log(something.peers_by_org.Org2MSP)
 
         return {
             success: true,

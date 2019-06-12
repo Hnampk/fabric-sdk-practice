@@ -96,4 +96,25 @@ router.post('/update-batch-config', async(req, res) => {
     res.json(result);
 });
 
+
+// Get getChannelDiscoveryResults
+router.get('/discovery-service', async(req, res) => {
+    logger.info('<<<<<<<<<<<<<<<<< DISCOVER CHANNEL >>>>>>>>>>>>>>>>>');
+
+    var channelName = req.query.channel;
+    var peer = req.query.peer;
+
+    logger.debug('channelName : ' + channelName);
+    logger.debug('username :' + req.username);
+    logger.debug('orgname:' + req.orgname);
+
+    if (!channelName) {
+        res.json(getErrorMessage('\'channelName\''));
+        return;
+    }
+
+    let message = await channel.getChannelDiscoveryResults(channelName, req.orgname, req.username, peer);
+    res.json(message);
+});
+
 module.exports = router;

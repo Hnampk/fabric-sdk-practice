@@ -270,23 +270,3 @@ app.get('/channels/:channelName/block/:blockHash', async(req, res) => {
     let result = await query.queryBlockByHash(peer, blockHash, channelName, req.orgname, req.username);
     res.json(result);
 });
-
-// Get getChannelDiscoveryResults
-app.get('/discover/:channelName', async(req, res) => {
-    logger.info('<<<<<<<<<<<<<<<<< DISCOVER CHANNEL >>>>>>>>>>>>>>>>>');
-
-    var channelName = req.params.channelName;
-    var peer = req.query.peer;
-
-    logger.debug('channelName : ' + channelName);
-    logger.debug('username :' + req.username);
-    logger.debug('orgname:' + req.orgname);
-
-    if (!channelName) {
-        res.json(getErrorMessage('\'channelName\''));
-        return;
-    }
-
-    let message = await query.getChannelDiscoveryResults(channelName, req.orgname, req.username, peer);
-    res.json(message);
-});
