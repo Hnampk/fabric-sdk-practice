@@ -10,14 +10,12 @@ var expressJWT = require('express-jwt');
 var jwt = require('jsonwebtoken');
 var bearerToken = require('express-bearer-token');
 var cors = require('cors');
-
-require('./app/config.js');
-
 var hfc = require('fabric-client');
 
-const preRes = require('./utils/common/pre-response');
+require('./config.js');
 
-var query = require('./app/query.js');
+
+const preRes = require('./utils/common/pre-response');
 
 const users = require('./controllers/user');
 const channels = require('./controllers/channel');
@@ -25,7 +23,6 @@ const organizations = require('./controllers/organization');
 const peers = require('./controllers/peer');
 const blocks = require('./controllers/block');
 const transactions = require('./controllers/transaction');
-
 
 var host = process.env.HOST || hfc.getConfigSetting('host');
 var port = process.env.PORT || hfc.getConfigSetting('port');

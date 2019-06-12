@@ -3,18 +3,19 @@ var hfc = require('fabric-client');
 var path = require('path');
 var fs = require('fs');
 
-require('./app/config.js');
-var createChannel = require('./app/create-channel.js');
-var getRegisteredUser = require('./app/get-registered-user.js');
-var joinChannel = require('./app/join-channel.js');
+require('./config.js');
+var channel = require('./services/channel');
+var user = require('./services/user');
+var peer = require('./services/peer');
+var block = require('./services/block');
+var organization = require('./services/organization');
+
 var installChaincode = require('./app/install-chaincode.js');
 var instantiateChaincode = require('./app/instantiate-chaincode');
 var query = require('./app/query.js');
 var invokeChaincode = require('./app/invoke.js');
 var updateAnchorPeers = require('./app/update-anchor-peers.js');
-var updateChannelConfig = require('./app/update-channel-config');
 var addNewOrg = require('./app/add-new-org.js');
-var utils = require('./app/utils.js');
 
 
 
@@ -32,7 +33,7 @@ async function joinNewPeer() {
      *  (4) Edit file network-profiles/network-config.yaml: Thêm thông tin về peer mới
      *  (5) Sử dụng SDK function join channel
      */
-    await joinChannel.joinChannel("mychannel", ["peer2.org2.example.com"], "Org2", "Jim");
+    await channel.joinChannel("mychannel", ["peer2.org2.example.com"], "Org2", "Jim");
 }
 
 async function start() {
@@ -48,11 +49,11 @@ async function start() {
      *  (6) Query chaincode
      *  (7) Invoke chaincode
      */
-    // await createChannel.createChannel("mychannel", "../../fabric/channel-artifacts/channel.tx", "Org1");
-    // await getRegisteredUser.getRegisteredUser("Tom", "Org1", true);
-    // await getRegisteredUser.getRegisteredUser("Jim1", "Org2", true);
-    // await joinChannel.joinChannel("mychannel", ["peer0.org1.example.com", "peer1.org1.example.com"], "Org1", "Tom");
-    // await joinChannel.joinChannel("mychannel", ["peer0.org2.example.com"], "Org2", "Jim");
+    // await channel.createChannel("mychannel", "../../fabric/channel-artifacts/channel.tx", "Org1");
+    // await user.getRegisteredUser("Tom", "Org1", true);
+    // await user.getRegisteredUser("Jim1", "Org2", true);
+    // await channel.joinChannel("mychannel", ["peer0.org1.example.com", "peer1.org1.example.com"], "Org1", "Tom");
+    // await channel.joinChannel("mychannel", ["peer0.org2.example.com"], "Org2", "Jim");
     // await updateAnchorPeers.updateAnchorPeers("mychannel", "../../fabric/channel-artifacts/Org1MSPanchors.tx", "Tom", "Org1");
     // await updateAnchorPeers.updateAnchorPeers("mychannel", "../../fabric/channel-artifacts/Org2MSPanchors.tx", "Jim", "Org2");
     // await installChaincode.installChaincode(["peer0.org1.example.com", "peer1.org1.example.com"], "mycc", "github.com/example_cc/go", "v0", "golang", "Org1", "Tom");
@@ -61,18 +62,17 @@ async function start() {
     // await query.queryChaincode(["peer0.org1.example.com", "peer1.org1.example.com"], 'mycc', 'query', ['a'], 'mychannel', 'Org1', 'Tom');
     // await invokeChaincode.invokeChaincode(["peer0.org1.example.com", "peer0.org2.example.com"], "mycc", "move", ["a", "b", "10"], "mychannel", "Org1", "Tom");
 
-    // await query.getChannelList("peer0.org1.example.com", "Org1", "Tom");
-    // await query.getOrgChannelList( "Org1", "Tom");
+    // await peer.getChannelList("peer0.org1.example.com", "Org1", "Tom");
 
-    // await createChannel.createChannel("anotherchannel", "../../fabric/channel-artifacts/anotherchannel.tx", "Org1");
-    // await joinChannel.joinChannel("anotherchannel", ["peer0.org1.example.com", "peer1.org1.example.com"], "Org1", "Tom");
-    // await joinChannel.joinChannel("anotherchannel", ["peer0.org2.example.com", "peer1.org2.example.com"], "Org2", "Jim");
-
+    // await channel.createChannel("anotherchannel", "../../fabric/channel-artifacts/anotherchannel.tx", "Org1");
+    // await channel.joinChannel("anotherchannel", ["peer0.org1.example.com", "peer1.org1.example.com"], "Org1", "Tom");
+    // await channel.joinChannel("anotherchannel", ["peer0.org2.example.com", "peer1.org2.example.com"], "Org2", "Jim");
 
 
-    let a = await query.getChannelDiscoveryResults('mychannel', 'Org1', 'Tom');
+
+    // let a = await channel.getChannelDiscoveryResults('mychannel', 'Org1', 'Tom');
     // console.log(a.result.peers_by_org.Org2MSP.peers);
-    // await query.getChannelListNotJoined('peer0.org1.example.com', 'Org1', 'Tom');
+    await peer.getChannelListSameOrg('peer0.org1.example.com', 'Org1', 'Tom');
 
     /**
      * Join New Peer of an existing Org into channel
@@ -105,16 +105,16 @@ async function start() {
      *  (6) Cài đặt và upgrade chaincode (Optional)
      */
     // await addNewOrg.addNewOrg('Org3', 'mychannel', 'Org1', 'Tom');
-    // await getRegisteredUser.getRegisteredUser("Alex", "Org3", true);
-    // await joinChannel.joinChannel("mychannel", ["peer0.org3.example.com", "peer1.org3.example.com"], "Org3", "Alex");
+    // await user.getRegisteredUser("Alex", "Org3", true);
+    // await channel.joinChannel("mychannel", ["peer0.org3.example.com", "peer1.org3.example.com"], "Org3", "Alex");
 
 
 
     // await query.queryInfo("peer0.org1.example.com", "mychannel", "Org1", "Tom");
-    // await query.queryBlockByHash("peer0.org1.example.com", "6cf9cdea21efb0903f3447a583c245bf8d34816facab55343a908bb6cdebb6ad", "mychannel", "Org1", "Tom");
-    // await query.getPeers("mychannel", "Org1", "Tom");
-    // await query.getChannelList('peer0.org1.example.com', 'Org1', 'Tom');
-    // await query.getPeersForOrg("Org1", 'Tom');
+    // await block.queryBlockByHash("peer0.org1.example.com", "6cf9cdea21efb0903f3447a583c245bf8d34816facab55343a908bb6cdebb6ad", "mychannel", "Org1", "Tom");
+    // await channel.getPeers("mychannel", "Org1", "Tom");
+    // await peer.getChannelList('peer0.org1.example.com', 'Org1', 'Tom');
+    // await organization.getPeersForOrg("Org1", 'Tom');
     // await query.getOrgs("mychannel", "Org1", "Tom");
 
     // try {
