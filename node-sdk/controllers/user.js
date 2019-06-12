@@ -7,8 +7,8 @@ const hfc = require('fabric-client');
 const app = require('../app');
 const router = express.Router();
 
-const user = require('../services/user');
 const preRes = require('../utils/common/pre-response');
+const user = require('../services/user');
 
 // Register and enroll user
 router.post('/enroll', async(req, res) => {

@@ -4,8 +4,8 @@ const logger = require('../utils/common/logger').getLogger('controllers/channel'
 
 const router = express.Router();
 
-const channel = require('../services/channel');
 const preRes = require('../utils/common/pre-response');
+const channel = require('../services/channel');
 
 // Create Channel
 router.post('/create', async(req, res) => {
