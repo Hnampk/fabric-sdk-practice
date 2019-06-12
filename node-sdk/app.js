@@ -21,6 +21,7 @@ var query = require('./app/query.js');
 
 const users = require('./controllers/user');
 const channels = require('./controllers/channel');
+const organizations = require('./controllers/organization');
 const peers = require('./controllers/peer');
 const blocks = require('./controllers/block');
 const transactions = require('./controllers/transaction');
@@ -78,12 +79,6 @@ app.use(function(req, res, next) {
     });
 });
 
-app.use("/api/users", users);
-app.use("/api/channels", channels);
-app.use("/api/peers", peers);
-app.use("/api/blocks", blocks);
-app.use("/api/transactions", transactions);
-
 ///////////////////////////////////////////////////////////////////////////////
 //////////////////////////////// START SERVER /////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -92,119 +87,9 @@ logger.info('****************** SERVER STARTED ************************');
 logger.info('***************  http://%s:%s  ******************', host, port);
 server.timeout = 240000;
 
-function getErrorMessage(field) {
-    var response = {
-        success: false,
-        message: field + ' field is missing or Invalid in the request'
-    };
-    return response;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////// REST ENDPOINTS START HERE ///////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-
-// Query getPeersForOrg
-app.get('/user/peers', async(req, res) => {
-    logger.info('<<<<<<<<<<<<<<<<< Org\'s Peer list >>>>>>>>>>>>>>>>>');
-    var username = req.username;
-    var orgName = req.orgname;
-    logger.debug('End point : /user/peers');
-    logger.debug('User name : ' + username);
-    logger.debug('Org name  : ' + orgName);
-
-    if (!username) {
-        res.json(getErrorMessage('\'username\''));
-        return;
-    }
-    if (!orgName) {
-        res.json(getErrorMessage('\'orgName\''));
-        return;
-    }
-
-    let response = await query.getPeersForOrg(orgName, username);
-    res.json(response);
-});
-
-// Query getOrgChannelList
-app.get('/channels', async(req, res) => {
-    logger.info('<<<<<<<<<<<<<<<<< Org\'s Channel List >>>>>>>>>>>>>>>>>');
-    var username = req.username;
-    var orgName = req.orgname;
-    logger.debug('End point : /channels');
-    logger.debug('User name : ' + username);
-    logger.debug('Org name  : ' + orgName);
-
-    if (!username) {
-        res.json(getErrorMessage('\'username\''));
-        return;
-    }
-    if (!orgName) {
-        res.json(getErrorMessage('\'orgName\''));
-        return;
-    }
-
-    let response = await query.getOrgChannelList(orgName, username);
-    console.log(response)
-    res.json(response);
-});
-
-
-// Query getChannelListByPeer
-app.get('/:peer/channels', async(req, res) => {
-    var username = req.username;
-    var orgName = req.orgname;
-    var peer = req.params.peer
-    logger.debug('End point : /user/peers');
-    logger.debug('User name : ' + username);
-    logger.debug('Org name  : ' + orgName);
-    logger.debug('peer name  : ' + peer);
-
-    if (!username) {
-        res.json(getErrorMessage('\'username\''));
-        return;
-    }
-    if (!orgName) {
-        res.json(getErrorMessage('\'orgName\''));
-        return;
-    }
-    if (!peer) {
-        res.json(getErrorMessage('\'peer\''));
-        return;
-    }
-
-    let response = await query.getChannelList(peer, orgName, username);
-    res.json(response);
-});
-
-// Query getChannelListSameOrg
-app.get('/:peer/other_channels', async(req, res) => {
-    logger.info('<<<<<<<<<<<<<<<<< Peer\'s didn\'t join channels >>>>>>>>>>>>>>>>>');
-    var username = req.username;
-    var orgName = req.orgname;
-    var peer = req.params.peer
-
-    logger.debug('End point : /:peer/other_channels');
-    logger.debug('User name : ' + username);
-    logger.debug('Org name  : ' + orgName);
-    logger.debug('peer name  : ' + peer);
-
-    if (!username) {
-        res.json(getErrorMessage('\'username\''));
-        return;
-    }
-
-    if (!orgName) {
-        res.json(getErrorMessage('\'orgName\''));
-        return;
-    }
-
-    if (!peer) {
-        res.json(getErrorMessage('\'peer\''));
-        return;
-    }
-
-    let response = await query.getChannelListSameOrg(peer, orgName, username);
-
-    res.json(response);
-});
+app.use("/api/users", users);
+app.use("/api/channels", channels);
+app.use("/api/organizations", organizations);
+app.use("/api/peers", peers);
+app.use("/api/blocks", blocks);
+app.use("/api/transactions", transactions);

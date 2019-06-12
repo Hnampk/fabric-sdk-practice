@@ -251,7 +251,7 @@ async function getChannelBatchConfig(channelName, orgName, username) {
      *  (4) convert config sang json
      *  (5) Close channel
      */
-    logger.debug('\n\n============ getChannelConfig start ============\n')
+    logger.debug('\n\n============ getChannelBatchConfig start ============\n')
 
     let channel = null
 
