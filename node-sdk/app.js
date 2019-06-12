@@ -149,31 +149,6 @@ app.get('/channels', async(req, res) => {
     res.json(response);
 });
 
-// Query getPeers
-app.get('/channels/:channelName/peers', async(req, res) => {
-    logger.info('<<<<<<<<<<<<<<<<< QUERY CHANNEL PEERS >>>>>>>>>>>>>>>>>');
-    var username = req.username;
-    var orgName = req.orgname;
-    var channelName = req.params.channelName;
-
-    logger.debug('End point : /channels/:channelName/peers');
-    logger.debug('channelName : ' + channelName);
-    logger.debug('User name : ' + username);
-    logger.debug('Org name  : ' + orgName);
-
-    if (!username) {
-        res.json(getErrorMessage('\'username\''));
-        return;
-    }
-    if (!orgName) {
-        res.json(getErrorMessage('\'orgName\''));
-        return;
-    }
-
-    let response = await query.getPeers(channelName, orgName, username);
-    // console.log(JSON.stringify(response));
-    res.send(response);
-});
 
 // Query getChannelListByPeer
 app.get('/:peer/channels', async(req, res) => {

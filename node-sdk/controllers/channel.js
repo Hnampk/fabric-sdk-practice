@@ -31,7 +31,6 @@ router.post('/create', async(req, res) => {
     res.json(message);
 });
 
-
 // Join Channel
 router.post('/join', async(req, res) => {
     logger.info('<<<<<<<<<<<<<<<<< J O I N  C H A N N E L >>>>>>>>>>>>>>>>>');
@@ -57,12 +56,35 @@ router.post('/join', async(req, res) => {
     res.json(message);
 });
 
+// Query getPeers
+router.get('/peers', async(req, res) => {
+    logger.info('<<<<<<<<<<<<<<<<< Q U E R Y  C H A N N E L  P E E R S >>>>>>>>>>>>>>>>>');
+    logger.debug('End point : api/channels/peers');
+
+    var username = req.username;
+    var orgName = req.orgname;
+    var channelName = req.query.channel;
+
+    logger.debug('channelName : ' + channelName);
+    logger.debug('User name : ' + username);
+    logger.debug('Org name  : ' + orgName);
+
+    if (!channelName) {
+        res.json(getErrorMessage('\'channelName\''));
+        return;
+    }
+
+    let response = await channel.getPeers(channelName, orgName, username);
+    // console.log(JSON.stringify(response));
+    res.send(response);
+});
+
 // getChannelConfig
-router.get('/:channel/batch-config', async(req, res) => {
+router.get('/batch-config', async(req, res) => {
     logger.info('<<<<<<<<<<<<<<<<< G E T  C H A N N E L  C O N F I G >>>>>>>>>>>>>>>>>');
     logger.debug('End point : api/channels/batch-config');
 
-    var channelName = req.params.channel;
+    var channelName = req.query.channel;
 
     logger.debug('channelName : ' + channelName);
     logger.debug('username :' + req.username);
@@ -80,6 +102,7 @@ router.get('/:channel/batch-config', async(req, res) => {
 // updateChannelConfig
 router.post('/update-batch-config', async(req, res) => {
     logger.info('<<<<<<<<<<<<<<<<< U P D A T E  C H A N N E L  C O N F I G >>>>>>>>>>>>>>>>>');
+    logger.debug('End point : api/channels/update-batch-config');
 
     var channelName = req.body.channelName;
     var batchSize = req.body.batchSize;
@@ -91,6 +114,11 @@ router.post('/update-batch-config', async(req, res) => {
     logger.debug('batchSize:' + batchSize);
     logger.debug('batchTimeout:' + batchTimeout);
 
+    if (!channelName) {
+        res.json(preRes.getErrorMessage('\'channelName\''));
+        return;
+    }
+
     let result = await channel.modifyChannelBatchConfig(channelName, batchSize, batchTimeout, req.orgname, req.username);
 
     res.json(result);
@@ -99,7 +127,8 @@ router.post('/update-batch-config', async(req, res) => {
 
 // Get getChannelDiscoveryResults
 router.get('/discovery-service', async(req, res) => {
-    logger.info('<<<<<<<<<<<<<<<<< DISCOVER CHANNEL >>>>>>>>>>>>>>>>>');
+    logger.info('<<<<<<<<<<<<<<<<< D I S C O V E R  C H A N N E L >>>>>>>>>>>>>>>>>');
+    logger.debug('End point : api/channels/discovery-service');
 
     var channelName = req.query.channel;
     var peer = req.query.peer;

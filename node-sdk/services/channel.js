@@ -181,6 +181,61 @@ async function joinChannel(channelName, peers, orgName, username) {
     }
 }
 
+
+/**
+ * Lấy danh sách các Peer của Channel theo network-config
+ * @param {string} channelName 
+ * @param {string} orgName 
+ * @param {string} username 
+ */
+async function getPeers(channelName, orgName, username) {
+    /**
+     * TODO:
+     *  (1) Thiết lập client của Org
+     *  (2) Thiết lập instance của channel và kiểm tra thông tin
+     *  (3) get Peers
+     *  (4) Close channel
+     */
+
+    let channel = null;
+
+    try {
+        // (1) Thiết lập client của Org
+        let client = await helper.getClientForOrg(orgName, username);
+
+        // (2) Thiết lập instance của channel và kiểm tra thông tin
+        channel = client.getChannel(channelName);
+        if (!channel) {
+            let message = util.format('Channel %s was not defined in the connection profile', channelName);
+            logger.error(message);
+            throw new Error(message)
+        }
+
+        // (3) get Peers
+        let results = channel.getChannelPeers();
+
+        let peerLists = [];
+        results.forEach(async(peer) => {
+            // waitForReady(peer.getPeer()); // for peer status but not ok yet!. From fabric-client/lib/Remote.js
+            // console.log(peer);
+            peerLists.push({
+                name: peer.getName(),
+                mspid: peer.getMspid(),
+            });
+        });
+
+        return preRes.getSuccessResponse('Successfully get peers of channel ' + channelName, peerLists);
+    } catch (e) {
+        logger.error('Failed to query due to error: ' + e.stack ? e.stack : e);
+        return preRes.getFailureResponse(e.toString());
+    } finally {
+        // (4) Close channel
+        if (channel) {
+            channel.close();
+        }
+    }
+}
+
 /**
  * Lấy config của Channel (Max Timeout, Batch Size,...)
  * @param {string} channelName 
@@ -426,6 +481,7 @@ async function getChannelDiscoveryResults(channelName, orgName, username, peer) 
 
 exports.createChannel = createChannel;
 exports.joinChannel = joinChannel;
+exports.getPeers = getPeers;
 exports.getChannelBatchConfig = getChannelBatchConfig;
 exports.modifyChannelBatchConfig = modifyChannelBatchConfig;
 exports.getChannelDiscoveryResults = getChannelDiscoveryResults;
