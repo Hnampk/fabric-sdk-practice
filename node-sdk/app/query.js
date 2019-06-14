@@ -2,7 +2,6 @@
 
 var util = require('util');
 var helper = require('./helper.js');
-var utils = require('./utils.js')
 const agent = require('superagent-promise')(require('superagent'), Promise);
 var logger = helper.getLogger('Query');
 

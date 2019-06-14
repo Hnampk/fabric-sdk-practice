@@ -51,7 +51,7 @@ async function start() {
      */
     // await channel.createChannel("mychannel", "../../fabric/channel-artifacts/channel.tx", "Org1");
     // await user.getRegisteredUser("Tom", "Org1", true);
-    // await user.getRegisteredUser("Jim1", "Org2", true);
+    // await user.getRegisteredUser("Jim", "Org2", true);
     // await channel.joinChannel("mychannel", ["peer0.org1.example.com", "peer1.org1.example.com"], "Org1", "Tom");
     // await channel.joinChannel("mychannel", ["peer0.org2.example.com"], "Org2", "Jim");
     // await updateAnchorPeers.updateAnchorPeers("mychannel", "../../fabric/channel-artifacts/Org1MSPanchors.tx", "Tom", "Org1");
@@ -72,7 +72,7 @@ async function start() {
 
     // let a = await channel.getChannelDiscoveryResults('mychannel', 'Org1', 'Tom');
     // console.log(a.result.peers_by_org.Org2MSP.peers);
-    await peer.getChannelListSameOrg('peer0.org1.example.com', 'Org1', 'Tom');
+    // await peer.getChannelListSameOrg('peer0.org1.example.com', 'Org1', 'Tom');
 
     /**
      * Join New Peer of an existing Org into channel
@@ -131,6 +131,8 @@ async function start() {
     // for (let i = 0; i < 22; i++) {
     //     invokeChaincode.invokeChaincode(["peer0.org1.example.com", "peer0.org2.example.com"], "mycc", "move", ["a", "b", "10"], "mychannel", "Org1", "Tom");
     // }
+
+    channel.registerEventHub("mychannel", "Org1", "Tom");
 
 }
 

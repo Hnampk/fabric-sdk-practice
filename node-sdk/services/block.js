@@ -2,6 +2,8 @@
 
 var util = require('util');
 
+const channelService = require('./channel');
+
 const helper = require('../utils/helper');
 const logger = require('../utils/common/logger').getLogger('services/block');
 const preRes = require('../utils/common/pre-response');
@@ -20,34 +22,25 @@ async function getBlockList(to, offset, peer, channelName, orgName, username) {
     /**
      * TODO:
      *  (1) Thiết lập client của Org
-     *  (2) Thiết lập instance của channel và kiểm tra thông tin
-     *  (3) Tinh chỉnh arguments
-     *  (4) query
-     *  (5) Close channel
+     *  (1) Thiết lập instance của channel và kiểm tra thông tin
+     *  (2) Tinh chỉnh arguments
+     *  (3) query
+     *  (4) Close channel
      */
 
     if (offset < 0) {
         throw new Error("offset must be a positive number!");
     }
 
-    let channel = null;
     let from = null;
     let blockList = [];
     let orgininalTo = to;
 
     try {
-        // (1) Thiết lập client của Org
-        let client = await helper.getClientForOrg(orgName, username);
+        // (1) Thiết lập instance của channel và kiểm tra thông tin
+        var { client, channel } = await channelService._getClientWithChannel(channelName, orgName, username);
 
-        // (2) Thiết lập instance của channel và kiểm tra thông tin
-        channel = client.getChannel(channelName);
-        if (!channel) {
-            let message = util.format('Channel %s was not defined in the connection profile', channelName);
-            logger.error(message);
-            throw new Error(message)
-        }
-
-        // (3) Tinh chỉnh arguments
+        // (2) Tinh chỉnh arguments
         let latestBlock = null;
         if ((!to) || (to < 0)) {
             // Nếu to = -1 => lấy đến block cuối cùng
@@ -68,7 +61,7 @@ async function getBlockList(to, offset, peer, channelName, orgName, username) {
             from = (to - offset <= 0) ? 0 : (to - offset);
         }
 
-        // (4) query
+        // (3) query
         if (peer) {
             for (let i = from; i <= to; i++) {
                 let block;
@@ -98,13 +91,40 @@ async function getBlockList(to, offset, peer, channelName, orgName, username) {
 
         return preRes.getFailureResponse(err.toString());
     } finally {
-        // (5) Close channel
+        // (4) Close channel
         if (channel) {
             channel.close();
         }
     }
 }
 
+async function getLatestBlockIndex(channelName, orgName, username) {
+
+    try {
+        // (1) Thiết lập instance của channel và kiểm tra thông tin
+        var { client, channel } = await channelService._getClientWithChannel(channelName, orgName, username);
+
+        let result = await channel.queryInfo();
+
+        let latestBlockBuffer = result.currentBlockHash.toBuffer();
+        let latestBlock = await channel.queryBlockByHash(latestBlockBuffer)
+
+
+        let index = latestBlock.header.number;
+
+        return preRes.getSuccessResponse("Successfully get the index of latest block!", index)
+
+    } catch (err) {
+        logger.error('Failed to query due to error: ' + err.stack ? err.stack : err);
+
+        return preRes.getFailureResponse(err.toString());
+    } finally {
+        // (5) Close channel
+        if (channel) {
+            channel.close();
+        }
+    }
+}
 /**
  * Lấy block theo mã hash 
  * @param {string} peer 
@@ -154,3 +174,4 @@ async function queryBlockByHash(peer, hash, channelName, orgName, username) {
 
 exports.getBlockList = getBlockList;
 exports.queryBlockByHash = queryBlockByHash;
+exports.getLatestBlockIndex = getLatestBlockIndex;

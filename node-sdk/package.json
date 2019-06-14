@@ -21,7 +21,9 @@
     "jsonwebtoken": "^8.5.1",
     "log4js": "^0.6.38",
     "request": "^2.88.0",
+    "socket.io": "^2.2.0",
     "superagent": "^5.0.2",
     "superagent-promise": "^1.1.0"
-  }
+  },
+  "devDependencies": {}
 }

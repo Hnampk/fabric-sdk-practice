@@ -1,16 +1,17 @@
 'use strict';
-var log4js = require('log4js');
-var logger = log4js.getLogger('app');
-var express = require('express');
-var bodyParser = require('body-parser');
-var http = require('http');
-var util = require('util');
-var app = module.exports = express();
-var expressJWT = require('express-jwt');
-var jwt = require('jsonwebtoken');
-var bearerToken = require('express-bearer-token');
-var cors = require('cors');
-var hfc = require('fabric-client');
+const express = require('express');
+const bodyParser = require('body-parser');
+const http = require('http');
+const util = require('util');
+const app = module.exports = express();
+const expressJWT = require('express-jwt');
+const jwt = require('jsonwebtoken');
+const bearerToken = require('express-bearer-token');
+const cors = require('cors');
+const hfc = require('fabric-client');
+const socket = require('socket.io');
+const log4js = require('log4js');
+const logger = log4js.getLogger('app');
 
 require('./config.js');
 
@@ -24,8 +25,10 @@ const peers = require('./controllers/peer');
 const blocks = require('./controllers/block');
 const transactions = require('./controllers/transaction');
 
-var host = process.env.HOST || hfc.getConfigSetting('host');
-var port = process.env.PORT || hfc.getConfigSetting('port');
+const channelService = require('./services/channel');
+
+const host = process.env.HOST || hfc.getConfigSetting('host');
+const port = process.env.PORT || hfc.getConfigSetting('port');
 
 ///////////////////////////////////////////////////////////////////////////////
 //////////////////////////////// SET CONFIGURATONS ////////////////////////////
@@ -79,10 +82,51 @@ app.use(function(req, res, next) {
 ///////////////////////////////////////////////////////////////////////////////
 //////////////////////////////// START SERVER /////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-var server = http.createServer(app).listen(port, function() {});
-logger.info('****************** SERVER STARTED ************************');
-logger.info('***************  http://%s:%s  ******************', host, port);
-server.timeout = 240000;
+const server = http.createServer(app)
+
+const io = socket(server);
+
+// next line is the money
+app.set('socketio', io);
+
+server.listen(port, () => {
+    logger.info('****************** SERVER STARTED ************************');
+    logger.info('***************  http://%s:%s  ******************', host, port);
+    server.timeout = 240000;
+
+    channelService.wsConfig(io);
+    io.sockets.on('connection', (socket) => {
+
+        console.log("connection")
+
+        socket.on('disconnect', (data) => {
+            console.log("User disconnected")
+        });
+
+        socket.on('listen-blocks', (data) => {
+            let channel = data.channel;
+            console.log("Listen to " + channel)
+
+            socket.join('channel-blocks-' + channel, () => {
+                io.in('channel-blocks-' + channel).clients((error, client) => {
+                    if (error) {
+                        console.log("JOIN FAILED: ", error)
+                    }
+                });
+            });
+        });
+
+        socket.on('stop-listen', (data) => {
+            let channel = data.channel;
+
+            socket.leave('channel-blocks-' + channel, () => {
+                console.log("Stop listen to " + channel + "!")
+            });
+
+        });
+    })
+});
+
 
 app.use("/api/users", users);
 app.use("/api/channels", channels);

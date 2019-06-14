@@ -28,6 +28,7 @@ router.post('/create', async(req, res) => {
     }
 
     let message = await channel.createChannel(channelName, channelConfigPath, req.orgname);
+
     res.json(message);
 });
 
@@ -138,12 +139,31 @@ router.get('/discovery-service', async(req, res) => {
     logger.debug('orgname:' + req.orgname);
 
     if (!channelName) {
-        res.json(getErrorMessage('\'channelName\''));
+        res.json(preRes.getErrorMessage('\'channelName\''));
         return;
     }
 
     let message = await channel.getChannelDiscoveryResults(channelName, req.orgname, req.username, peer);
     res.json(message);
 });
+
+router.post('/register-event-hub', async(req, res) => {
+    logger.info('<<<<<<<<<<<<<<<<< R E G I S T E R  E V E N T  H U B >>>>>>>>>>>>>>>>>');
+    logger.debug('End point : api/channels/register-event-hub');
+
+    var channelName = req.body.channel;
+
+    logger.debug('channelName : ' + channelName);
+    logger.debug('username :' + req.username);
+    logger.debug('orgname:' + req.orgname);
+
+    if (!channelName) {
+        res.json(preRes.getErrorMessage('\'channelName\''));
+        return;
+    }
+
+    let message = await channel.registerEventHub(channelName, req.orgname, req.username);
+    res.json(message);
+})
 
 module.exports = router;

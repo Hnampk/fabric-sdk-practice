@@ -29,7 +29,7 @@ router.get('/channels', async(req, res) => {
 
 // Query getChannelListSameOrg
 router.get('/not-joined-channels', async(req, res) => {
-    logger.info('<<<<<<<<<<<<<<<<< G E T  P E E R \' S  D I D N  T  J O I N  C H A N N E L S >>>>>>>>>>>>>>>>>');
+    logger.info('<<<<<<<<<<<<<<<<< G E T  P E E R \' S  D I D N O T  J O I N  C H A N N E L S >>>>>>>>>>>>>>>>>');
     var username = req.username;
     var orgName = req.orgname;
     var peerName = req.query.peer

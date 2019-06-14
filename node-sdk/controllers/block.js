@@ -25,6 +25,28 @@ router.get('/by-hash', async(req, res) => {
     res.json(result);
 });
 
+//getLatestBlockIndex
+router.get('/latest-index', async(req, res) => {
+    logger.info('<<<<<<<<<<<<<<<<< G E T  L A T E S T  B L O C K  I N D E X >>>>>>>>>>>>>>>>>');
+    logger.debug('End point : api/blocks/latest-index');
+
+    var username = req.username;
+    var orgName = req.orgname;
+    var channelName = req.query.channel;
+
+    logger.debug('channelName : ' + channelName);
+    logger.debug('User name : ' + username);
+    logger.debug('Org name  : ' + orgName);
+
+    if (!channelName) {
+        res.json(getErrorMessage('\'channelName\''));
+        return;
+    }
+
+    let response = await block.getLatestBlockIndex(channelName, orgName, username);
+    res.send(response);
+});
+
 // Query blocks
 router.get('/:channelName', async(req, res) => {
     logger.info('<<<<<<<<<<<<<<<<< QUERY BLOCKS >>>>>>>>>>>>>>>>>');

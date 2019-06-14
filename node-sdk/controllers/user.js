@@ -34,9 +34,11 @@ router.post('/enroll', async(req, res) => {
     }, app.get('secret'));
     let response = await user.getRegisteredUser(username, orgName, true);
     logger.debug('-- returned from registering the username %s for organization %s', username, orgName);
-    if (response && typeof response !== 'string') {
+    if (response.success) {
         logger.debug('Successfully registered the username %s for organization %s', username, orgName);
-        response.result.token = token;
+        if (response.result) {
+            response.result.token = token;
+        }
         res.json(response);
     } else {
         logger.debug('Failed to register the username %s for organization %s with::%s', username, orgName, response);

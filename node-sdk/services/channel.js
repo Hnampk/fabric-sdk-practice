@@ -9,6 +9,41 @@ const requester = require('request');
 const helper = require('../utils/helper');
 const logger = require('../utils/common/logger').getLogger('services/channel');
 const preRes = require('../utils/common/pre-response');
+var io;
+
+function wsConfig(socket) {
+    io = socket;
+}
+
+/**
+ * Thiết lập instance của channel và kiểm tra thông tin
+ * @param {*} channelName 
+ * @param {*} client 
+ */
+async function _getClientWithChannel(channelName, orgName, username) {
+    /**
+     * TODO:
+     *  (1) Thiết lập client của Org
+     *  (2) Lấy channel instance
+     */
+    logger.debug('\n====== _getClientWithChannel \'' + channelName + '\' ======\n');
+
+    // (1) Thiết lập client của Org
+    let client = username ?
+        (await helper.getClientForOrg(orgName, username)) :
+        (await helper.getClientForOrg(orgName));
+    logger.debug('Successfully got the fabric client for the organization "%s"', orgName);
+
+    // (2) Lấy channel instance
+    let channel = client.getChannel(channelName);
+    if (!channel) {
+        let message = util.format('Channel %s was not defined in the connection profile', channelName);
+        logger.error(message);
+        throw new Error(message);
+    }
+
+    return { client, channel };
+}
 
 /**
  * Tạo channel
@@ -26,7 +61,7 @@ async function createChannel(channelName, channelConfigPath, orgName) {
      *  (5) Gửi request tạo channel
      */
 
-    logger.debug('\n====== Creating Channel \'' + channelName + '\' ======\n');
+    logger.debug('\n====== createChannel \'' + channelName + '\' ======\n');
 
     try {
         // (1) Thiết lập client của Org
@@ -60,6 +95,10 @@ async function createChannel(channelName, channelConfigPath, orgName) {
                 logger.debug('Successfully created the channel.');
                 let message = 'Channel \'' + channelName + '\' created Successfully';
 
+                setTimeout(async() => {
+                    await registerEventHub(channelName, orgName);
+                }, 1000);
+
                 return preRes.getSuccessResponse(message);
             } else {
                 logger.error('Failed to create the channel. status:' + result.status + ' reason:' + result.info);
@@ -81,6 +120,34 @@ async function createChannel(channelName, channelConfigPath, orgName) {
     }
 }
 
+var blockRegistrationNumbers = new Map();
+
+async function registerEventHub(channelName, orgName, username) {
+    if (io) {
+        let { client, channel } = await _getClientWithChannel(channelName, orgName, username);
+
+        let eventHubs = channel.getChannelEventHubsForOrg();
+
+        let eh = eventHubs[0];
+
+        let blockRegistrationNumber = blockRegistrationNumbers.get(channelName);
+
+        if (!blockRegistrationNumber) {
+            blockRegistrationNumber = eh.registerBlockEvent((block => {
+                io.in('channel-blocks-' + channelName).emit('block', { channelName, block });
+            }), (e => {
+                console.log("error", e)
+            }));
+
+            blockRegistrationNumbers.set(channelName, blockRegistrationNumber);
+        }
+
+        if (!eh.isconnected()) {
+            eh.connect({ full_block: true });
+        }
+    }
+}
+
 /**
  * Join Peer vào Channel
  * @param {string} channelName 
@@ -91,31 +158,23 @@ async function createChannel(channelName, channelConfigPath, orgName) {
 async function joinChannel(channelName, peers, orgName, username) {
     /**
      * TODO:
-     *  (1) Thiết lập client của Org
-     *  (2) Kiểm tra thông tin và lấy Genesis block của channel
+     *  (1) Thiết lập instance của channel và kiểm tra thông tin
+     *  (2) Lấy Genesis block của channel
      *  (3) Thực hiện join các peer vào channel
      */
 
-    logger.debug('\n\n============ Join Channel start ============\n')
+    logger.debug('\n\n============ joinChannel start ============\n')
 
     let errorMessage = null;
-    let channel = null;
     var all_eventhubs = [];
     try {
 
         logger.info('Calling peers in organization "%s" to join the channel', orgName);
 
-        // (1) Thiết lập client của Org
-        let client = await helper.getClientForOrg(orgName, username);
-        logger.debug('Successfully got the fabric client for the organization "%s"', orgName);
+        // (1) Thiết lập instance của channel và kiểm tra thông tin
+        var { client, channel } = await _getClientWithChannel(channelName, orgName, username);
 
-        // (2) Kiểm tra thông tin và lấy Genesis block của channel
-        channel = client.getChannel(channelName);
-        if (!channel) {
-            let message = util.format('Channel %s was not defined in the connection profile', channelName);
-            logger.error(message);
-            throw new Error(message);
-        }
+        // (2) Lấy Genesis block của channel
         let request = {
             txId: client.newTransactionID(true)
         }
@@ -191,27 +250,17 @@ async function joinChannel(channelName, peers, orgName, username) {
 async function getPeers(channelName, orgName, username) {
     /**
      * TODO:
-     *  (1) Thiết lập client của Org
-     *  (2) Thiết lập instance của channel và kiểm tra thông tin
-     *  (3) get Peers
-     *  (4) Close channel
+     *  (1) Thiết lập instance của channel và kiểm tra thông tin
+     *  (2) get Peers
+     *  (3) Close channel
      */
-
-    let channel = null;
+    logger.debug('\n\n============ getPeers start ============\n')
 
     try {
-        // (1) Thiết lập client của Org
-        let client = await helper.getClientForOrg(orgName, username);
+        // (1) Thiết lập instance của channel và kiểm tra thông tin
+        var { client, channel } = await _getClientWithChannel(channelName, orgName, username);
 
-        // (2) Thiết lập instance của channel và kiểm tra thông tin
-        channel = client.getChannel(channelName);
-        if (!channel) {
-            let message = util.format('Channel %s was not defined in the connection profile', channelName);
-            logger.error(message);
-            throw new Error(message)
-        }
-
-        // (3) get Peers
+        // (2) get Peers
         let results = channel.getChannelPeers();
 
         let peerLists = [];
@@ -229,7 +278,7 @@ async function getPeers(channelName, orgName, username) {
         logger.error('Failed to query due to error: ' + e.stack ? e.stack : e);
         return preRes.getFailureResponse(e.toString());
     } finally {
-        // (4) Close channel
+        // (3) Close channel
         if (channel) {
             channel.close();
         }
@@ -245,33 +294,22 @@ async function getPeers(channelName, orgName, username) {
 async function getChannelBatchConfig(channelName, orgName, username) {
     /**
      * TODO:
-     *  (1) Thiết lập client của Org
-     *  (2) Thiết lập instance của channel và kiểm tra thông tin
-     *  (3) Lấy config mới nhất của Orderer
-     *  (4) convert config sang json
-     *  (5) Close channel
+     *  (1) Thiết lập instance của channel và kiểm tra thông tin
+     *  (2) Lấy config mới nhất của Orderer
+     *  (3) convert config sang json
+     *  (4) Close channel
      */
     logger.debug('\n\n============ getChannelBatchConfig start ============\n')
 
-    let channel = null
-
     try {
-        // (1) Thiết lập client của Org
-        let client = await helper.getClientForOrg(orgName, username);
+        // (1) Thiết lập instance của channel và kiểm tra thông tin
+        var { client, channel } = await _getClientWithChannel(channelName, orgName, username);
 
-        // (2) Thiết lập instance của channel và kiểm tra thông tin
-        channel = await client.getChannel(channelName);
-        if (!channel) {
-            let message = util.format('Channel %s was not defined in the connection profile', channelName);
-            logger.error(message);
-            throw new Error(message);
-        }
-
-        // (3) Lấy config mới nhất của Orderer
+        // (2) Lấy config mới nhất của Orderer
         let configEnvelope = await channel.getChannelConfigFromOrderer();
         let originalConfigProto = configEnvelope.config.toBuffer(); // Lưu lại config gốc
 
-        // (4) Sử dụng tool configtxlator để convert config sang json
+        // (3) Sử dụng tool configtxlator để convert config sang json
         let response = await agent.post(hfc.getConfigSetting('configtxlator') + '/protolator/decode/common.Config',
             originalConfigProto).buffer();
 
@@ -281,7 +319,7 @@ async function getChannelBatchConfig(channelName, orgName, username) {
     } catch (e) {
         return preRes.getFailureResponse(e.toString());
     } finally {
-        // (5) Close channel
+        // (4) Close channel
         if (channel) channel.close();
     }
 }
@@ -297,34 +335,24 @@ async function getChannelBatchConfig(channelName, orgName, username) {
 async function modifyChannelBatchConfig(channelName, batchSize, batchTimeout, orgName, username) {
     /**
      *  TODO:
-     *  (1) Thiết lập client của Org
-     *  (2) Thiết lập instance của channel và kiểm tra thông tin
-     *  (3) Lấy config mới nhất của Orderer
-     *  (4) Chỉnh sửa config
-     *  (5) Thực hiện update
-     *  (6) Close channel
+     *  (1) Thiết lập instance của channel và kiểm tra thông tin
+     *  (2) Lấy config mới nhất của Orderer
+     *  (3) Chỉnh sửa config
+     *  (4) Thực hiện update
+     *  (5) Close channel
      */
-
-    let channel = null;
+    logger.debug('\n\n============ modifyChannelBatchConfig start ============\n')
 
     try {
-        // (1) Thiết lập client của Org
-        let client = await helper.getClientForOrg(orgName, username);
+        // (1) Thiết lập instance của channel và kiểm tra thông tin
+        var { client, channel } = await _getClientWithChannel(channelName, orgName, username);
 
-        // (2) Thiết lập instance của channel và kiểm tra thông tin
-        channel = await client.getChannel(channelName);
-        if (!channel) {
-            let message = util.format('Channel %s was not defined in the connection profile', channelName);
-            logger.error(message);
-            throw new Error(message);
-        }
-
-        // (3) Lấy config mới nhất của Orderer
+        // (2) Lấy config mới nhất của Orderer
         let configEnvelope = await channel.getChannelConfigFromOrderer();
         let originalConfigProto = configEnvelope.config.toBuffer(); // Lưu lại config gốc
 
 
-        // (4) Chỉnh sửa config
+        // (3) Chỉnh sửa config
         // Sử dụng tool configtxlator để convert config sang json
         let response = await agent.post('http://127.0.0.1:7059/protolator/decode/common.Config',
             originalConfigProto).buffer();
@@ -363,7 +391,6 @@ async function modifyChannelBatchConfig(channelName, batchSize, batchTimeout, or
                 }
             }
         };
-        3
 
         // Sử dụng tool configtxlator để tìm phần chỉnh sửa
         // Kết quả nhận được sẽ dùng để ký và gửi đển orderer update
@@ -389,7 +416,7 @@ async function modifyChannelBatchConfig(channelName, batchSize, batchTimeout, or
 
         let configProto = response; // nội dung config dùng để  update
 
-        // (5) Thực hiện update
+        // (4) Thực hiện update
         let signatures = [];
 
         // Ký bởi orderer admin
@@ -418,25 +445,30 @@ async function modifyChannelBatchConfig(channelName, batchSize, batchTimeout, or
     } catch (e) {
         return preRes.getFailureResponse(e.toString());
     } finally {
-        // (6) Close channel
+        // (5) Close channel
         if (channel) channel.close();
     }
 }
 
+/**
+ * Lấy danh sách peer available qua Discovery service
+ * @param {*} channelName 
+ * @param {*} orgName 
+ * @param {*} username 
+ * @param {*} peer 
+ */
 async function getChannelDiscoveryResults(channelName, orgName, username, peer) {
-    let channel = null;
+    /**
+     *  TODO:
+     *  (1) Thiết lập instance của channel và kiểm tra thông tin
+     *  (2) Lấy danh sách peer available qua Discovery service
+     *  (3) Close channel
+     */
+    logger.debug('\n\n============ getChannelDiscoveryResults start ============\n')
 
     try {
-        // (1) Thiết lập client của Org
-        let client = await helper.getClientForOrg(orgName, username);
-
-        // (2) Thiết lập instance của channel và kiểm tra thông tin
-        channel = client.getChannel(channelName);
-        if (!channel) {
-            let message = util.format('Channel %s was not defined in the connection profile', channelName);
-            logger.error(message);
-            throw new Error(message)
-        }
+        // (1) Thiết lập instance của channel và kiểm tra thông tin
+        var { client, channel } = await _getClientWithChannel(channelName, orgName, username);
 
         if (peer) {
             await channel.initialize({
@@ -452,8 +484,8 @@ async function getChannelDiscoveryResults(channelName, orgName, username, peer) 
             });
         }
 
+        // (2) Lấy danh sách peer available qua Discovery service
         let something = await channel.getDiscoveryResults();
-
 
         return {
             success: true,
@@ -471,13 +503,13 @@ async function getChannelDiscoveryResults(channelName, orgName, username, peer) 
             msg: err.toString()
         };
     } finally {
-        // (4) Close channel
+        // (3) Close channel
         if (channel) {
             channel.close();
         }
     }
-
 }
+
 
 exports.createChannel = createChannel;
 exports.joinChannel = joinChannel;
@@ -485,3 +517,6 @@ exports.getPeers = getPeers;
 exports.getChannelBatchConfig = getChannelBatchConfig;
 exports.modifyChannelBatchConfig = modifyChannelBatchConfig;
 exports.getChannelDiscoveryResults = getChannelDiscoveryResults;
+exports.registerEventHub = registerEventHub;
+exports.wsConfig = wsConfig;
+exports._getClientWithChannel = _getClientWithChannel;

@@ -65,6 +65,7 @@ async function getRegisteredUser(username, orgName, isJson) {
             // Đăng ký cho user
             let secret = await caClient.register({
                 enrollmentID: username,
+                enrollmentSecret: username + 'pw',
                 affiliation: orgName.toLowerCase() + '.department1'
             }, adminUserObj);
 
@@ -73,6 +74,8 @@ async function getRegisteredUser(username, orgName, isJson) {
                 username: username,
                 password: secret
             });
+
+            // console.log(user);
 
             // https://gerrit.hyperledger.org/r/#/c/19953/
             user._enrollmentSecret = secret;
@@ -93,6 +96,7 @@ async function getRegisteredUser(username, orgName, isJson) {
                 throw new Error('User was not enrolled ')
             }
         }
+
         return response;
     } catch (err) {
         logger.error('Failed to get registered user: %s with error: %s', username, err.toString());
