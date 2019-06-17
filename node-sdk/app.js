@@ -24,6 +24,7 @@ const organizations = require('./controllers/organization');
 const peers = require('./controllers/peer');
 const blocks = require('./controllers/block');
 const transactions = require('./controllers/transaction');
+const chaincodes = require('./controllers/chaincode');
 
 const channelService = require('./services/channel');
 
@@ -134,3 +135,4 @@ app.use("/api/organizations", organizations);
 app.use("/api/peers", peers);
 app.use("/api/blocks", blocks);
 app.use("/api/transactions", transactions);
+app.use("/api/chaincodes", chaincodes);

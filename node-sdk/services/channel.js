@@ -9,6 +9,8 @@ const requester = require('request');
 const helper = require('../utils/helper');
 const logger = require('../utils/common/logger').getLogger('services/channel');
 const preRes = require('../utils/common/pre-response');
+
+var blockRegistrationNumbers = new Map();
 var io;
 
 function wsConfig(socket) {
@@ -120,31 +122,34 @@ async function createChannel(channelName, channelConfigPath, orgName) {
     }
 }
 
-var blockRegistrationNumbers = new Map();
-
 async function registerEventHub(channelName, orgName, username) {
     if (io) {
         let { client, channel } = await _getClientWithChannel(channelName, orgName, username);
 
         let eventHubs = channel.getChannelEventHubsForOrg();
 
-        let eh = eventHubs[0];
+        if (eventHubs.length > 0) {
+            let eh = eventHubs[0];
+            let blockRegistrationNumber = blockRegistrationNumbers.get(channelName);
+            console.log("blockRegistrationNumber", blockRegistrationNumber)
 
-        let blockRegistrationNumber = blockRegistrationNumbers.get(channelName);
+            if (!blockRegistrationNumber) {
+                console.log("not blockRegistrationNumber")
+                blockRegistrationNumber = eh.registerBlockEvent((block => {
+                    io.in('channel-blocks-' + channelName).emit('block', { channelName, block });
+                }), (e => {
+                    console.log("error", e)
+                }));
 
-        if (!blockRegistrationNumber) {
-            blockRegistrationNumber = eh.registerBlockEvent((block => {
-                io.in('channel-blocks-' + channelName).emit('block', { channelName, block });
-            }), (e => {
-                console.log("error", e)
-            }));
+                blockRegistrationNumbers.set(channelName, blockRegistrationNumber);
 
-            blockRegistrationNumbers.set(channelName, blockRegistrationNumber);
+                if (!eh.isconnected()) {
+                    console.log("connect");
+                    eh.connect({ full_block: true });
+                }
+            }
         }
 
-        if (!eh.isconnected()) {
-            eh.connect({ full_block: true });
-        }
     }
 }
 

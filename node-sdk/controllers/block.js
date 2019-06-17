@@ -9,7 +9,7 @@ const block = require('../services/block');
 
 // Query queryBlockByHash
 router.get('/by-hash', async(req, res) => {
-    logger.info('<<<<<<<<<<<<<<<<< QUERY BLOCKS >>>>>>>>>>>>>>>>>');
+    logger.info('<<<<<<<<<<<<<<<<< Q U E R Y  B L O C K  B Y  H A S H >>>>>>>>>>>>>>>>>');
 
     var channelName = req.query.channel;
     var blockHash = req.query.block_hash;
@@ -20,6 +20,21 @@ router.get('/by-hash', async(req, res) => {
     logger.debug('username :' + req.username);
     logger.debug('orgname:' + req.orgname);
     logger.debug('blockHash: ' + blockHash);
+
+    if (!peer) {
+        res.json(getErrorMessage('\'peer\''));
+        return;
+    }
+
+    if (!channelName) {
+        res.json(getErrorMessage('\'channel\''));
+        return;
+    }
+
+    if (!blockHash) {
+        res.json(getErrorMessage('\'block_hash\''));
+        return;
+    }
 
     let result = await block.queryBlockByHash(peer, blockHash, channelName, req.orgname, req.username);
     res.json(result);
@@ -39,7 +54,7 @@ router.get('/latest-index', async(req, res) => {
     logger.debug('Org name  : ' + orgName);
 
     if (!channelName) {
-        res.json(getErrorMessage('\'channelName\''));
+        res.json(getErrorMessage('\'channel\''));
         return;
     }
 
@@ -49,7 +64,7 @@ router.get('/latest-index', async(req, res) => {
 
 // Query blocks
 router.get('/:channelName', async(req, res) => {
-    logger.info('<<<<<<<<<<<<<<<<< QUERY BLOCKS >>>>>>>>>>>>>>>>>');
+    logger.info('<<<<<<<<<<<<<<<<< Q U E R Y  B L O C K S >>>>>>>>>>>>>>>>>');
 
     var channelName = req.params.channelName;
     var peer = req.query.peer;
@@ -62,7 +77,7 @@ router.get('/:channelName', async(req, res) => {
     logger.debug('query details: to: %s, offset: %s, peer: %s', to, offset, peer);
 
     if (!channelName) {
-        res.json(preRes.getErrorMessage('\'channelName\''));
+        res.json(preRes.getErrorMessage('\'channel\''));
         return;
     }
     if ((to == null) || (typeof(to) == 'undefined')) {

@@ -9,9 +9,8 @@ var user = require('./services/user');
 var peer = require('./services/peer');
 var block = require('./services/block');
 var organization = require('./services/organization');
+var chaincode = require('./services/chaincode');
 
-var installChaincode = require('./app/install-chaincode.js');
-var instantiateChaincode = require('./app/instantiate-chaincode');
 var query = require('./app/query.js');
 var invokeChaincode = require('./app/invoke.js');
 var updateAnchorPeers = require('./app/update-anchor-peers.js');
@@ -37,8 +36,6 @@ async function joinNewPeer() {
 }
 
 async function start() {
-    // await installChaincode.installChaincode(["peer0.org1.example.com", "peer1.org1.example.com"], "another", "/src/github.com/example_cc/node", "v1", "node", "Org1", "Tom");
-
     /**
      * MAIN FLOW: 
      *  (1) Create channel
@@ -56,9 +53,9 @@ async function start() {
     // await channel.joinChannel("mychannel", ["peer0.org2.example.com"], "Org2", "Jim");
     // await updateAnchorPeers.updateAnchorPeers("mychannel", "../../fabric/channel-artifacts/Org1MSPanchors.tx", "Tom", "Org1");
     // await updateAnchorPeers.updateAnchorPeers("mychannel", "../../fabric/channel-artifacts/Org2MSPanchors.tx", "Jim", "Org2");
-    // await installChaincode.installChaincode(["peer0.org1.example.com", "peer1.org1.example.com"], "mycc", "github.com/example_cc/go", "v0", "golang", "Org1", "Tom");
-    // await installChaincode.installChaincode(["peer0.org2.example.com"], "mycc", "github.com/example_cc/go", "v0", "golang", "Org2", "Jim");
-    // await instantiateChaincode.instantiateChaincode(["peer0.org1.example.com", "peer1.org1.example.com"], "mychannel", "mycc", "v0", "golang", "init", ["a", "100", "b", "200"], "Org1", "Tom");
+    // await chaincode.installChaincode(["peer0.org1.example.com", "peer1.org1.example.com"], "mycc11", "github.com/example_cc/go", "v0", "golang", "Org1", "Tom");
+    // await chaincode.installChaincode(["peer0.org2.example.com"], "mycc", "../../../fabric/src/github.com/example_cc/go", "v0", "golang", "Org2", "Jim");
+    // await chaincode.instantiateChaincode(["peer0.org1.example.com", "peer1.org1.example.com"], "mychannel", "mycc", "v0", "golang", "init", ["a", "100", "b", "200"], "Org1", "Tom");
     // await query.queryChaincode(["peer0.org1.example.com", "peer1.org1.example.com"], 'mycc', 'query', ['a'], 'mychannel', 'Org1', 'Tom');
     // await invokeChaincode.invokeChaincode(["peer0.org1.example.com", "peer0.org2.example.com"], "mycc", "move", ["a", "b", "10"], "mychannel", "Org1", "Tom");
 
@@ -132,8 +129,14 @@ async function start() {
     //     invokeChaincode.invokeChaincode(["peer0.org1.example.com", "peer0.org2.example.com"], "mycc", "move", ["a", "b", "10"], "mychannel", "Org1", "Tom");
     // }
 
-    channel.registerEventHub("mychannel", "Org1", "Tom");
+    // channel.registerEventHub("mychannel", "Org1", "Tom");
 
+    // let chaincodes = await chaincode.getInstalledChaincodes("peer0.org1.example.com", "Org1", "Tom");
+    let chaincodes = await chaincode.getInstantiatedChaincodes("mychannel", "Org1", "Tom");
+    console.log(chaincodes.result.chaincodes);
+
+    // await chaincode.installChaincode(["peer0.org1.example.com", "peer1.org1.example.com"], "mynewcc", "github.com/example_cc/go", "v0", "golang", "Org1", "Tom");
+    // await chaincode.instantiateChaincode(["peer0.org1.example.com", "peer1.org1.example.com"], "mychannel", "mycc112", "v0", "golang", "init", ["a", "100", "b", "200"], "Org1", "Tom");
 }
 
 start();

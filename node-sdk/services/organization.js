@@ -4,8 +4,6 @@ const helper = require('../utils/helper');
 const logger = require('../utils/common/logger').getLogger('services/organization');
 const preRes = require('../utils/common/pre-response');
 
-const peer = require('./peer');
-
 /**
  * Lấy danh sách các Peer của Org
  * @param {string} orgName 
