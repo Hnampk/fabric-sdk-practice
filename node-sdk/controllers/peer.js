@@ -40,7 +40,7 @@ router.get('/not-joined-channels', async(req, res) => {
     logger.debug('Peer name  : ' + peerName);
 
     if (!peerName) {
-        res.json(getErrorMessage('\'peer\''));
+        res.json(preRes.getErrorMessage('\'peer\''));
         return;
     }
 

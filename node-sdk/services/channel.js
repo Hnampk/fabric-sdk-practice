@@ -19,8 +19,8 @@ function wsConfig(socket) {
 
 /**
  * Thiết lập instance của channel và kiểm tra thông tin
- * @param {*} channelName 
- * @param {*} client 
+ * @param {string} channelName 
+ * @param {string} client 
  */
 async function _getClientWithChannel(channelName, orgName, username) {
     /**
@@ -122,34 +122,61 @@ async function createChannel(channelName, channelConfigPath, orgName) {
     }
 }
 
+/**
+ * Connect tới event hub của peer để nhận event
+ * @param {*} channelName 
+ * @param {*} orgName 
+ * @param {*} username 
+ */
 async function registerEventHub(channelName, orgName, username) {
+    /**
+     * TODO:
+     *  (1) Thiết lập instance của channel và kiểm tra thông tin
+     *  (2) Lấy thông tin các event hub của Org hiện tại trong channel
+     *  (3) Kiểm tra tình trạng đăng ký của event hub
+     *  (4) Đăng ký event hub
+     *  (5) Connect event hub
+     *  (6) Close channel
+     */
+
     if (io) {
-        let { client, channel } = await _getClientWithChannel(channelName, orgName, username);
+        try {
+            // (1) Thiết lập instance của channel và kiểm tra thông tin
+            var { client, channel } = await _getClientWithChannel(channelName, orgName, username);
 
-        let eventHubs = channel.getChannelEventHubsForOrg();
+            // (2) Lấy thông tin các event hub của Org hiện tại trong channel
+            let eventHubs = channel.getChannelEventHubsForOrg();
 
-        if (eventHubs.length > 0) {
-            let eh = eventHubs[0];
-            let blockRegistrationNumber = blockRegistrationNumbers.get(channelName);
-            console.log("blockRegistrationNumber", blockRegistrationNumber)
+            if (eventHubs.length > 0) {
+                let blockRegistrationNumber = blockRegistrationNumbers.get(channelName);
+                console.log("blockRegistrationNumber", blockRegistrationNumber)
 
-            if (!blockRegistrationNumber) {
-                console.log("not blockRegistrationNumber")
-                blockRegistrationNumber = eh.registerBlockEvent((block => {
-                    io.in('channel-blocks-' + channelName).emit('block', { channelName, block });
-                }), (e => {
-                    console.log("error", e)
-                }));
+                // (3) Kiểm tra tình trạng đăng ký của event hub
+                if (!blockRegistrationNumber) {
+                    let eh = eventHubs[0];
 
-                blockRegistrationNumbers.set(channelName, blockRegistrationNumber);
+                    console.log("not blockRegistrationNumber")
+                        // (4) Đăng ký event hub
+                    blockRegistrationNumber = eh.registerBlockEvent((block => {
+                        io.in('channel-blocks-' + channelName).emit('block', { channelName, block });
+                    }), (e => {
+                        console.log("error", e)
+                    }));
 
-                if (!eh.isconnected()) {
-                    console.log("connect");
-                    eh.connect({ full_block: true });
+                    blockRegistrationNumbers.set(channelName, blockRegistrationNumber);
+
+                    if (!eh.isconnected()) {
+                        console.log("connect");
+                        // (5) Connect
+                        eh.connect({ full_block: true });
+                    }
                 }
             }
-        }
+        } catch (e) {
 
+        } finally {
+            // if (channel) channel.close();
+        }
     }
 }
 

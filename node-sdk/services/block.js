@@ -98,18 +98,31 @@ async function getBlockList(to, offset, peer, channelName, orgName, username) {
     }
 }
 
+/**
+ * Lấy index của block mới nhất trong ledger
+ * @param {string} channelName 
+ * @param {string} orgName 
+ * @param {string} username 
+ */
 async function getLatestBlockIndex(channelName, orgName, username) {
+    /**
+     * TODO:
+     *  (1) Thiết lập instance của channel và kiểm tra thông tin
+     *  (2) Query thông tin của channel
+     *  (3) Xử lý thông tin block mới nhất
+     *  (4) Close channel
+     */
 
     try {
         // (1) Thiết lập instance của channel và kiểm tra thông tin
         var { client, channel } = await channelService._getClientWithChannel(channelName, orgName, username);
 
+        // (2) Query thông tin của channel
         let result = await channel.queryInfo();
 
+        // (3) Xử lý thông tin block mới nhất
         let latestBlockBuffer = result.currentBlockHash.toBuffer();
         let latestBlock = await channel.queryBlockByHash(latestBlockBuffer)
-
-
         let index = latestBlock.header.number;
 
         return preRes.getSuccessResponse("Successfully get the index of latest block!", index)
@@ -119,7 +132,7 @@ async function getLatestBlockIndex(channelName, orgName, username) {
 
         return preRes.getFailureResponse(err.toString());
     } finally {
-        // (5) Close channel
+        // (4) Close channel
         if (channel) {
             channel.close();
         }

@@ -53,10 +53,6 @@ app.use(bearerToken());
 app.use(function(req, res, next) {
     logger.debug(' ------>>>>>> new request for %s', req.originalUrl);
 
-    if (req.originalUrl.indexOf('/users') >= 0) {
-        return next();
-    }
-
     if (req.originalUrl.indexOf('/api/users') >= 0) {
         return next();
     }

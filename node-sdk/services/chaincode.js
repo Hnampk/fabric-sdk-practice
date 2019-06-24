@@ -9,10 +9,24 @@ const preRes = require('../utils/common/pre-response');
 
 const channelService = require('./channel');
 
+/**
+ * Lấy danh sách các chaincode đã install trên peer
+ * @param {string} peer 
+ * @param {string} orgName 
+ * @param {string} username 
+ */
 async function getInstalledChaincodes(peer, orgName, username) {
+    /**
+     * TODO:
+     *  (1) Thiết lập client của Org
+     *  (2) Query lấy danh sách các chaincode
+     */
 
     try {
+        // (1) Thiết lập client của Org
         let client = await helper.getClientForOrg(orgName, username);
+
+        // (2) Query lấy danh sách các chaincode
         let response = await client.queryInstalledChaincodes(peer, true);
 
         if (response.chaincodes < 1) {
@@ -21,16 +35,30 @@ async function getInstalledChaincodes(peer, orgName, username) {
 
         return preRes.getSuccessResponse('Successfully get the installed chaincodes of ' + peer + '!', { peer: peer, chaincodes: response.chaincodes });
     } catch (e) {
-
         return preRes.getFailureResponse(e.toString());
     }
 
 }
 
+/**
+ * Lấy danh sách các chaincode đã triển khai trên channel
+ * @param {string} channelName 
+ * @param {string} orgName 
+ * @param {string} username 
+ */
 async function getInstantiatedChaincodes(channelName, orgName, username) {
+    /**
+     * TODO:
+     *  (1) Thiết lập instance của channel và kiểm tra thông tin
+     *  (2) Query lấy danh sách các chaincode
+     *  (3) Close channel
+     */
+
     try {
+        // (1) Thiết lập instance của channel và kiểm tra thông tin
         var { client, channel } = await channelService._getClientWithChannel(channelName, orgName, username);
 
+        // (2) Query lấy danh sách các chaincode
         let response = await channel.queryInstantiatedChaincodes(null, true);
 
         if (response.chaincodes < 1) {
@@ -41,6 +69,7 @@ async function getInstantiatedChaincodes(channelName, orgName, username) {
     } catch (e) {
         return preRes.getFailureResponse(e.toString());
     } finally {
+        // (3) Close channel
         if (channel) channel.close()
     }
 }
@@ -119,6 +148,51 @@ async function installChaincode(peers, chaincodeName, chaincodePath, chaincodeVe
     }
 }
 
+async function installChaincodeByPackage(peers, chaincodePackage, orgName, username) {
+    let errorMessage = null;
+
+    try {
+        // (1) Thiết lập client của Org
+        let client = await helper.getClientForOrg(orgName, username);
+
+        let request = {
+            targets: peers,
+            chaincodePackage: chaincodePackage
+        }
+
+        let results = await client.installChaincode(request);
+
+        // (3) Kiểm tra 
+        let proposalResponses = results[0]; // mảng các response của request install trên từng peer yêu cầu
+
+        for (let i in proposalResponses) {
+            if (proposalResponses[i] instanceof Error) {
+                errorMessage = util.format('install proposal resulted in an error :: %s', proposalResponses[i].toString());
+                logger.error(errorMessage);
+            } else if (proposalResponses[i].response && proposalResponses[i].response.status === 200) {
+                logger.info('install proposal was good');
+            } else {
+                errorMessage = util.format('install proposal was bad for an unknown reason %j', proposalResponses[i]);
+                logger.error(errorMessage);
+            }
+        }
+    } catch (e) {
+        console.log("ERRRR", e)
+    }
+
+    if (!errorMessage) {
+        let message = util.format('Successfully installed chaincode');
+        logger.info(message);
+
+        return preRes.getSuccessResponse(message);
+    } else {
+        let message = util.format('Failed to install due to:%s', errorMessage);
+        logger.error(message);
+
+        return preRes.getFailureResponse(message);
+    }
+}
+
 /**
  * Instantiate chaincode lên channel
  * @param {Array<string>} peers 
@@ -134,15 +208,14 @@ async function installChaincode(peers, chaincodeName, chaincodePath, chaincodeVe
 async function instantiateChaincode(peers, channelName, chaincodeName, chaincodeVersion, ChaincodeType, functionName, args, orgName, username) {
     /**
      * TODO:
-     *  (1) Thiết lập client của Org
-     *  (2) Thiết lập instance của channel và kiểm tra thông tin
-     *  (3) Gửi yêu cầu instantiate đến các endorser
-     *  (4) Kiểm tra response, nếu hợp lệ, thực hiện tiếp
+     *  (1) Thiết lập instance của channel và kiểm tra thông tin
+     *  (2) Gửi yêu cầu instantiate đến các endorser
+     *  (3) Kiểm tra response, nếu hợp lệ, thực hiện tiếp
      *  ---
-     *  (5) Thiết lập các EventHub để lắng nghe sự kiện instantiate
-     *  (6) Thực hiện gửi request proposal đến orderer
+     *  (4) Thiết lập các EventHub để lắng nghe sự kiện instantiate
+     *  (5) Thực hiện gửi request proposal đến orderer
      *  ---
-     *  (7) Close channel
+     *  (6) Close channel
      */
 
     logger.debug('\n\n============ Instantiate chaincode on channel ' + channelName +
@@ -151,9 +224,10 @@ async function instantiateChaincode(peers, channelName, chaincodeName, chaincode
     let errorMessage = null;
 
     try {
+        // (1) Thiết lập instance của channel và kiểm tra thông tin
         var { client, channel } = await channelService._getClientWithChannel(channelName, orgName, username);
 
-        // (3) Gửi yêu cầu đến các endorser
+        // (2) Gửi yêu cầu đến các endorser
         let txId = client.newTransactionID(true);
         let request = {
             targets: peers,
@@ -194,7 +268,7 @@ async function instantiateChaincode(peers, channelName, chaincodeName, chaincode
         // và proposal kèm chữ ký của các endorser
         let results = await channel.sendInstantiateProposal(request, 60000);
 
-        // (4) Kiểm tra response
+        // (3) Kiểm tra response
         let proposalResponses = results[0]; // mảng các response của request trên từng peer yêu cầu
         let allGood = true;
 
@@ -219,7 +293,7 @@ async function instantiateChaincode(peers, channelName, chaincodeName, chaincode
                 proposalResponses[0].response.status, proposalResponses[0].response.message,
                 proposalResponses[0].response.payload, proposalResponses[0].endorsement.signature));;
 
-            // (5) Thiết lập các EventHub để lắng nghe sự kiện instantiate
+            // (4) Thiết lập các EventHub để lắng nghe sự kiện instantiate
             let promises = [];
             let eventHubs = channel.getChannelEventHubsForOrg(); // Danh sách các ChannelEventHub của org hiện tại
             logger.debug('found %s eventhubs for this organization %s', eventHubs.length, orgName);
@@ -263,7 +337,7 @@ async function instantiateChaincode(peers, channelName, chaincodeName, chaincode
                 promises.push(instanceEventPromise);
             });
 
-            // (6) Thực hiện gửi proposal đến orderer
+            // (5) Thực hiện gửi proposal đến orderer
             let proposal = results[1]; // proposal dùng gửi cho orderer
             let ordererRequest = {
                 txId: txId, // txId của proposal request để  đảm bảo tx được ký bỏi cùng admin
@@ -303,14 +377,14 @@ async function instantiateChaincode(peers, channelName, chaincodeName, chaincode
         logger.error('Failed to send instantiate due to error: ' + err.stack ? err.stack : err);
         errorMessage = err.toString();
     } finally {
-        // (7) Close channel
+        // (6) Close channel
         if (channel) {
             channel.close();
         }
     }
 
     if (errorMessage) {
-        message = util.format('Failed to instantiate the chaincode. cause:%s', errorMessage);
+        let message = util.format('Failed to instantiate the chaincode. cause:%s', errorMessage);
         logger.error(message);
 
         return preRes.getFailureResponse(message);
@@ -324,5 +398,7 @@ async function instantiateChaincode(peers, channelName, chaincodeName, chaincode
 
 exports.instantiateChaincode = instantiateChaincode;
 exports.installChaincode = installChaincode;
+exports.installChaincodeByPackage = installChaincodeByPackage;
 exports.getInstalledChaincodes = getInstalledChaincodes;
 exports.getInstantiatedChaincodes = getInstantiatedChaincodes;
+exports.test = test;

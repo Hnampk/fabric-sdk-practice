@@ -22,17 +22,17 @@ router.get('/by-hash', async(req, res) => {
     logger.debug('blockHash: ' + blockHash);
 
     if (!peer) {
-        res.json(getErrorMessage('\'peer\''));
+        res.json(preRes.getErrorMessage('\'peer\''));
         return;
     }
 
     if (!channelName) {
-        res.json(getErrorMessage('\'channel\''));
+        res.json(preRes.getErrorMessage('\'channel\''));
         return;
     }
 
     if (!blockHash) {
-        res.json(getErrorMessage('\'block_hash\''));
+        res.json(preRes.getErrorMessage('\'block_hash\''));
         return;
     }
 
@@ -54,7 +54,7 @@ router.get('/latest-index', async(req, res) => {
     logger.debug('Org name  : ' + orgName);
 
     if (!channelName) {
-        res.json(getErrorMessage('\'channel\''));
+        res.json(preRes.getErrorMessage('\'channel\''));
         return;
     }
 

@@ -71,7 +71,7 @@ router.get('/peers', async(req, res) => {
     logger.debug('Org name  : ' + orgName);
 
     if (!channelName) {
-        res.json(getErrorMessage('\'channelName\''));
+        res.json(preRes.getErrorMessage('\'channelName\''));
         return;
     }
 

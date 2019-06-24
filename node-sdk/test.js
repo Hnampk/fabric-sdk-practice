@@ -46,18 +46,18 @@ async function start() {
      *  (6) Query chaincode
      *  (7) Invoke chaincode
      */
-    // await channel.createChannel("mychannel", "../../fabric/channel-artifacts/channel.tx", "Org1");
-    // await user.getRegisteredUser("Tom", "Org1", true);
-    // await user.getRegisteredUser("Jim", "Org2", true);
-    // await channel.joinChannel("mychannel", ["peer0.org1.example.com", "peer1.org1.example.com"], "Org1", "Tom");
-    // await channel.joinChannel("mychannel", ["peer0.org2.example.com"], "Org2", "Jim");
-    // await updateAnchorPeers.updateAnchorPeers("mychannel", "../../fabric/channel-artifacts/Org1MSPanchors.tx", "Tom", "Org1");
-    // await updateAnchorPeers.updateAnchorPeers("mychannel", "../../fabric/channel-artifacts/Org2MSPanchors.tx", "Jim", "Org2");
-    // await chaincode.installChaincode(["peer0.org1.example.com", "peer1.org1.example.com"], "mycc11", "github.com/example_cc/go", "v0", "golang", "Org1", "Tom");
-    // await chaincode.installChaincode(["peer0.org2.example.com"], "mycc", "../../../fabric/src/github.com/example_cc/go", "v0", "golang", "Org2", "Jim");
-    // await chaincode.instantiateChaincode(["peer0.org1.example.com", "peer1.org1.example.com"], "mychannel", "mycc", "v0", "golang", "init", ["a", "100", "b", "200"], "Org1", "Tom");
-    // await query.queryChaincode(["peer0.org1.example.com", "peer1.org1.example.com"], 'mycc', 'query', ['a'], 'mychannel', 'Org1', 'Tom');
-    // await invokeChaincode.invokeChaincode(["peer0.org1.example.com", "peer0.org2.example.com"], "mycc", "move", ["a", "b", "10"], "mychannel", "Org1", "Tom");
+    await channel.createChannel("mychannel", "../../fabric/channel-artifacts/channel.tx", "Org1");
+    await user.getRegisteredUser("Tom", "Org1", true);
+    await user.getRegisteredUser("Jim", "Org2", true);
+    await channel.joinChannel("mychannel", ["peer0.org1.example.com", "peer1.org1.example.com"], "Org1", "Tom");
+    await channel.joinChannel("mychannel", ["peer0.org2.example.com"], "Org2", "Jim");
+    await updateAnchorPeers.updateAnchorPeers("mychannel", "../../fabric/channel-artifacts/Org1MSPanchors.tx", "Tom", "Org1");
+    await updateAnchorPeers.updateAnchorPeers("mychannel", "../../fabric/channel-artifacts/Org2MSPanchors.tx", "Jim", "Org2");
+    await chaincode.installChaincode(["peer0.org1.example.com", "peer1.org1.example.com"], "mycc", "github.com/example_cc/go", "1.0", "golang", "Org1", "Tom");
+    await chaincode.installChaincode(["peer0.org2.example.com"], "mycc", "github.com/example_cc/go", "1.0", "golang", "Org2", "Jim");
+    await chaincode.instantiateChaincode(["peer0.org1.example.com"], "mychannel", "mycc", "1.0", "golang", "init", ["a", "100", "b", "200"], "Org1", "Tom");
+    await query.queryChaincode(["peer0.org1.example.com", "peer1.org1.example.com"], 'mycc', 'query', ['a'], 'mychannel', 'Org1', 'Tom');
+    await invokeChaincode.invokeChaincode(["peer0.org1.example.com", "peer0.org2.example.com"], "mycc", "move", ["a", "b", "10"], "mychannel", "Org1", "Tom");
 
     // await peer.getChannelList("peer0.org1.example.com", "Org1", "Tom");
 
@@ -132,11 +132,10 @@ async function start() {
     // channel.registerEventHub("mychannel", "Org1", "Tom");
 
     // let chaincodes = await chaincode.getInstalledChaincodes("peer0.org1.example.com", "Org1", "Tom");
-    let chaincodes = await chaincode.getInstantiatedChaincodes("mychannel", "Org1", "Tom");
-    console.log(chaincodes.result.chaincodes);
+    // let chaincodes = await chaincode.getInstantiatedChaincodes("mychannel", "Org1", "Tom");
+    // console.log(chaincodes.result.chaincodes);
 
-    // await chaincode.installChaincode(["peer0.org1.example.com", "peer1.org1.example.com"], "mynewcc", "github.com/example_cc/go", "v0", "golang", "Org1", "Tom");
-    // await chaincode.instantiateChaincode(["peer0.org1.example.com", "peer1.org1.example.com"], "mychannel", "mycc112", "v0", "golang", "init", ["a", "100", "b", "200"], "Org1", "Tom");
+    // await chaincode.installChaincode(["peer0.org1.example.com", "peer1.org1.example.com"], "mynewcc", "/src/github.com/example_cc/node", "v0", "node", "Org1", "Tom");
 }
 
 start();
