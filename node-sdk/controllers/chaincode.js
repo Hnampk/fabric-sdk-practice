@@ -29,36 +29,54 @@ const storage = multer.diskStorage({
 
         let chaincodeName = req.body.chaincodeName;
         let chaincodeType = req.body.chaincodeType;
-        console.log("chaincodeType", chaincodeType);
 
-        if (!fs.existsSync(path.join(__dirname, '../../fabric/src/viettel.com'))) {
-            fs.mkdir(path.join(__dirname, '../../fabric/src/viettel.com'), (e => {
+        let tempPath = path.join(__dirname, '../../fabric/src/viettel.com');
+        if (!fs.existsSync(tempPath)) {
+            fs.mkdirSync(tempPath, (e => {
                 if (e) {
                     error = new Error(e);
-                    console.log("Error", e);
+                    console.log("Error1", e);
                 }
+                // Delay for sure!
+                setTimeout(() => {}, 100);
             }));
         }
 
-        if (!fs.existsSync(path.join(__dirname, '../../fabric/src/viettel.com/', chaincodeName))) {
-            fs.mkdir(path.join(__dirname, '../../fabric/src/viettel.com/', chaincodeName), (e => {
+        tempPath = path.join(__dirname, '../../fabric/src/viettel.com', chaincodeName);
+        if (!fs.existsSync(tempPath)) {
+            fs.mkdirSync(tempPath, (e => {
                 if (e) {
                     error = new Error(e);
-                    console.log("Error", e);
+                    console.log("Error2", e);
                 }
+                // Delay for sure!
+                setTimeout(() => {}, 100);
+
+                tempPath = path.join(__dirname, '../../fabric/src/viettel.com', chaincodeName, chaincodeType);
+                fs.mkdir(tempPath, (e => {
+                    if (e) {
+                        error = new Error(e);
+                        console.log("Error21", e);
+                    }
+                    // Delay for sure!
+                    setTimeout(() => {}, 100);
+                }));
             }));
         }
 
-        if (!fs.existsSync(path.join(__dirname, '../../fabric/src/viettel.com/', chaincodeName, '/', chaincodeType))) {
-            fs.mkdir(path.join(__dirname, '../../fabric/src/viettel.com/', chaincodeName, '/', chaincodeType), (e => {
+        tempPath = path.join(__dirname, '../../fabric/src/viettel.com', chaincodeName, chaincodeType);
+        if (!fs.existsSync(tempPath)) {
+            fs.mkdirSync(tempPath, (e => {
                 if (e) {
                     error = new Error(e);
-                    console.log("Error", e);
+                    console.log("Error3", e);
                 }
+                // Delay for sure!
+                setTimeout(() => {}, 100);
             }));
         }
 
-        callback(error, path.join(__dirname, '../../fabric/src/viettel.com/', chaincodeName, '/', chaincodeType));
+        callback(error, tempPath);
     },
     filename: async(req, file, callback) => {
         const name = file.originalname.toLowerCase().split(' ').join('-');
@@ -191,7 +209,7 @@ router.post('/instantiate', async(req, res) => {
 
 var upload = multer({ storage: storage }).single('file');
 router.post('/test-upload', async(req, res) => {
-    logger.info('<<<<<<<<<<<<<<<<< TEST UPLOAD >>>>>>>>>>>>>>>>>');
+    logger.info('<<<<<<<<<<<<<<<<< I N S T A L L  C H A I N C O D E  B Y  P A C K A G E >>>>>>>>>>>>>>>>>');
 
     upload(req, res, async(error) => {
         if (error instanceof multer.MulterError) {
@@ -243,25 +261,30 @@ router.post('/test-upload', async(req, res) => {
             return;
         }
 
-        let isInstalled = installedChaincodesResponse.result.chaincodes.map(chaincode => {
-            return { name: chaincode.name, version: chaincode.version }
-        }).find(chaincode => { return (chaincode.name == chaincodeName) && (chaincode.version == chaincodeVersion) });
+        if (installedChaincodesResponse.result) {
+            let isInstalled = installedChaincodesResponse.result.chaincodes.map(chaincode => {
+                return { name: chaincode.name, version: chaincode.version }
+            }).find(chaincode => { return (chaincode.name == chaincodeName) && (chaincode.version == chaincodeVersion) });
 
-        if (isInstalled) {
-            res.json(preRes.getFailureResponse("Chaincode name " + chaincodeName + " has already existed!"));
-            return;
+            if (isInstalled) {
+                res.json(preRes.getFailureResponse("Chaincode name " + chaincodeName + " has already existed!"));
+                return;
+            }
         }
 
         // let's install
-        let chaincodePath = "";
+        let chaincodePath = "viettel.com/" + chaincodeName + "/" + chaincodeType;
 
-        if (chaincodeType == 'golang') {
-            chaincodePath = "viettel.com/" + chaincodeName + "/" + chaincodeType;
-        } else {
-            chaincodePath = "/src/viettel.com/" + chaincodeName + "/" + chaincodeType;
+        if (chaincodeType != 'golang') {
+            chaincodePath = "/src/" + chaincodePath
         }
 
         let result = await chaincode.installChaincode([peer], chaincodeName, chaincodePath, chaincodeVersion, chaincodeType, req.orgname, req.username);
+
+        // Remove chaincode folder after installation
+        rimraf(path.join(__dirname, '../../fabric/src/viettel.com/', chaincodeName), (e) => {
+            console.log(e);
+        });
 
         res.json(result);
         // Everything went fine.

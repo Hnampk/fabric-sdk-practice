@@ -12,18 +12,18 @@ router.post('/create', async(req, res) => {
     logger.info('<<<<<<<<<<<<<<<<< C R E A T E  C H A N N E L >>>>>>>>>>>>>>>>>');
     logger.debug('End point : api/channels/create');
 
-    var channelName = req.body.channelName;
-    var channelConfigPath = req.body.channelConfigPath;
+    var channelName = req.body.channel;
+    var channelConfigPath = req.body.configPath;
 
     logger.debug('Channel name : ' + channelName);
     logger.debug('channelConfigPath : ' + channelConfigPath); //../artifacts/channel/mychannel.tx
 
     if (!channelName) {
-        res.json(preRes.getErrorMessage('\'channelName\''));
+        res.json(preRes.getErrorMessage('\'channel\''));
         return;
     }
     if (!channelConfigPath) {
-        res.json(preRes.getErrorMessage('\'channelConfigPath\''));
+        res.json(preRes.getErrorMessage('\'configPath\''));
         return;
     }
 
@@ -36,7 +36,7 @@ router.post('/create', async(req, res) => {
 router.post('/join', async(req, res) => {
     logger.info('<<<<<<<<<<<<<<<<< J O I N  C H A N N E L >>>>>>>>>>>>>>>>>');
     logger.debug('End point : api/channels/join');
-    var channelName = req.body.channelName;
+    var channelName = req.body.channel;
     var peers = req.body.peers;
 
     logger.debug('channelName : ' + channelName);
@@ -45,7 +45,7 @@ router.post('/join', async(req, res) => {
     logger.debug('orgname:' + req.orgname);
 
     if (!channelName) {
-        res.json(preRes.getErrorMessage('\'channelName\''));
+        res.json(preRes.getErrorMessage('\'channel\''));
         return;
     }
     if (!peers || peers.length == 0) {

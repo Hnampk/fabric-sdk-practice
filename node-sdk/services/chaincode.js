@@ -205,7 +205,7 @@ async function installChaincodeByPackage(peers, chaincodePackage, orgName, usern
  * @param {string} orgName 
  * @param {string} username 
  */
-async function instantiateChaincode(peers, channelName, chaincodeName, chaincodeVersion, ChaincodeType, functionName, args, orgName, username) {
+async function instantiateChaincode(peers, channelName, chaincodeName, chaincodeVersion, ChaincodeType, functionName, args, orgName, username, endorsementPolicy) {
     /**
      * TODO:
      *  (1) Thiết lập instance của channel và kiểm tra thông tin
@@ -236,28 +236,7 @@ async function instantiateChaincode(peers, channelName, chaincodeName, chaincode
             chaincodeVersion: chaincodeVersion,
             txId: txId,
             args: args,
-            'endorsement-policy': {
-                identities: [{
-                        role: {
-                            name: 'member',
-                            mspId: 'Org1MSP'
-                        }
-                    },
-                    {
-                        role: {
-                            name: 'member',
-                            mspId: 'Org2MSP'
-                        }
-                    }
-                ],
-                policy: {
-                    '1-of': [{
-                        'signed-by': 0
-                    }, {
-                        'signed-by': 1
-                    }]
-                }
-            }
+            'endorsement-policy': endorsementPolicy
         };
 
         if (functionName) {
@@ -401,4 +380,3 @@ exports.installChaincode = installChaincode;
 exports.installChaincodeByPackage = installChaincodeByPackage;
 exports.getInstalledChaincodes = getInstalledChaincodes;
 exports.getInstantiatedChaincodes = getInstantiatedChaincodes;
-exports.test = test;
