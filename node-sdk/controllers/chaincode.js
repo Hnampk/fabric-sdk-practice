@@ -203,12 +203,104 @@ router.post('/instantiate', async(req, res) => {
         return;
     }
 
-    let result = await chaincode.instantiateChaincode(peers, channelName, chaincodeName, chaincodeVersion, chaincodeType, fcn, args, req.orgname, req.username);
+    let result = await chaincode.instantiateChaincode(peers ? peers : null, channelName, chaincodeName, chaincodeVersion, chaincodeType, fcn, args, req.orgname, req.username);
     res.json(result);
 });
 
+router.post('/query', async(req, res) => {
+    logger.info('<<<<<<<<<<<<<<<<< Q U E R Y  C H A I N C O D E >>>>>>>>>>>>>>>>>');
+
+    var peers = req.body.peers;
+    var channelName = req.body.channel;
+    var chaincodeName = req.body.chaincodeName;
+    var fcn = req.body.fcn;
+    var args = req.body.args;
+
+    logger.debug('peers  : ' + peers);
+    logger.debug('chaincodeName : ' + chaincodeName);
+    logger.debug('fcn  : ' + fcn);
+    logger.debug('args  : ' + args);
+
+    if (!chaincodeName) {
+        res.json(preRes.getErrorMessage('\'chaincodeName\''));
+        return;
+    }
+
+    if (!args) {
+        res.json(preRes.getErrorMessage('\'args\''));
+        return;
+    }
+
+    let result = await chaincode.query(peers ? peers : null, chaincodeName, fcn, args, channelName, req.orgname, req.username);
+    res.json(result);
+});
+
+router.post('/invoke', async(req, res) => {
+    logger.info('<<<<<<<<<<<<<<<<< I N V O K E  C H A I N C O D E >>>>>>>>>>>>>>>>>');
+
+    var peers = req.body.peers;
+    var channelName = req.body.channel;
+    var chaincodeName = req.body.chaincodeName;
+    var fcn = req.body.fcn;
+    var args = req.body.args;
+
+    logger.debug('peers  : ' + peers);
+    logger.debug('chaincodeName : ' + chaincodeName);
+    logger.debug('fcn  : ' + fcn);
+    logger.debug('args  : ' + args);
+
+    if (!chaincodeName) {
+        res.json(preRes.getErrorMessage('\'chaincodeName\''));
+        return;
+    }
+
+    if (!args) {
+        res.json(preRes.getErrorMessage('\'args\''));
+        return;
+    }
+
+    let result = await chaincode.invokeChaincode(peers ? peers : null, chaincodeName, fcn, args, channelName, req.orgname, req.username);
+    res.json(result);
+});
+
+var testUpload = multer({
+    storage: multer.diskStorage({
+        destination: (req, file, callback) => {
+            console.log("req", req)
+            console.log("file", file)
+        },
+        filename: async(req, file, callback) => {
+            const name = file.originalname.toLowerCase().split(' ').join('-');
+            const ext = MIME_TYPE_MAP[file.mimetype];
+
+            callback(null, name);
+        }
+    })
+}).any();
+router.post('/test', async(req, res) => {
+    logger.info('<<<<<<<<<<<<<<<<< TEST UPLOAD >>>>>>>>>>>>>>>>>');
+
+    testUpload(req, res, async(error) => {
+        if (error instanceof multer.MulterError) {
+            // A Multer error occurred when uploading.
+            console.log("A Multer error occurred when uploading.", error)
+            res.json(preRes.getFailureResponse("A Multer error occurred when uploading."));
+            return;
+        } else if (error) {
+            // An unknown error occurred when uploading.
+            console.log("An unknown error occurred when uploading.", error)
+            res.json(preRes.getFailureResponse(error));
+            return;
+        }
+
+        console.log("EVERY THING IS OKAY!");
+        console.log(req.files);
+
+    });
+});
+
 var upload = multer({ storage: storage }).single('file');
-router.post('/test-upload', async(req, res) => {
+router.post('/install-by-package', async(req, res) => {
     logger.info('<<<<<<<<<<<<<<<<< I N S T A L L  C H A I N C O D E  B Y  P A C K A G E >>>>>>>>>>>>>>>>>');
 
     upload(req, res, async(error) => {
@@ -282,9 +374,9 @@ router.post('/test-upload', async(req, res) => {
         let result = await chaincode.installChaincode([peer], chaincodeName, chaincodePath, chaincodeVersion, chaincodeType, req.orgname, req.username);
 
         // Remove chaincode folder after installation
-        rimraf(path.join(__dirname, '../../fabric/src/viettel.com/', chaincodeName), (e) => {
-            console.log(e);
-        });
+        // rimraf(path.join(__dirname, '../../fabric/src/viettel.com/', chaincodeName), (e) => {
+        //     console.log(e);
+        // });
 
         res.json(result);
         // Everything went fine.
