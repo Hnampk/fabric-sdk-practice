@@ -69,19 +69,108 @@ async function start() {
         }
     }
 
+    let edsmplc1 = {
+        identities: [{
+                role: {
+                    name: 'member',
+                    mspId: 'Org1MSP'
+                }
+            },
+            {
+                role: {
+                    name: 'member',
+                    mspId: 'Org2MSP'
+                }
+            }
+        ],
+        policy: {
+            "2-of": [
+                { "signed-by": 0 },
+                { "signed-by": 1 },
+            ]
+        }
+    }
+
+    let edsmplc2 = {
+        identities: [{
+            role: {
+                name: 'member',
+                mspId: 'Org1MSP'
+            }
+        }],
+        policy: {
+            '1-of': [{
+                'signed-by': 0
+            }]
+        }
+    }
+
+    let edsmplc3 = {
+        identities: [{
+                role: {
+                    name: 'member',
+                    mspId: 'Org1MSP'
+                }
+            },
+            {
+                role: {
+                    name: 'member',
+                    mspId: 'Org2MSP'
+                }
+            }
+        ],
+        policy: {
+            "2-of": [
+                { "signed-by": 0 },
+                { "signed-by": 1 },
+            ]
+        }
+    }
+
     // await channel.createChannel("mychannel", "../../fabric/channel-artifacts/channel.tx", "Org1");
     // await user.getRegisteredUser("Tom", "Org1", true);
     // await user.getRegisteredUser("Jim", "Org2", true);
     // await channel.joinChannel("mychannel", ["peer0.org1.example.com", "peer1.org1.example.com"], "Org1", "Tom");
-    // await channel.joinChannel("mychannel", ["peer0.org2.example.com"], "Org2", "Jim");
+    // await channel.joinChannel("mychannel", ["peer0.org2.example.com", "peer1.org2.example.com"], "Org2", "Jim");
     // await updateAnchorPeers.updateAnchorPeers("mychannel", "../../fabric/channel-artifacts/Org1MSPanchors.tx", "Tom", "Org1");
     // await updateAnchorPeers.updateAnchorPeers("mychannel", "../../fabric/channel-artifacts/Org2MSPanchors.tx", "Jim", "Org2");
+    // await chaincode.installChaincode(["peer0.org1.example.com", "peer1.org1.example.com"], "mycc", "github.com/example_cc/go", "1.0", "golang", "Org1", "Tom");
+    // await chaincode.installChaincode(["peer0.org2.example.com", "peer1.org2.example.com"], "mycc", "github.com/example_cc/go", "1.0", "golang", "Org2", "Jim");
+    // await chaincode.instantiateChaincode(["peer0.org1.example.com"], "mychannel", "mycc", "1.0", "golang", "init", ["a", "100", "b", "200"], edsmplc, "Org1", "Tom");
     // await chaincode.installChaincode(["peer0.org1.example.com", "peer1.org1.example.com"], "mycc1", "github.com/example_cc/go", "1.0", "golang", "Org1", "Tom");
-    // await chaincode.installChaincode(["peer0.org2.example.com"], "mycc1", "github.com/example_cc/go", "1.0", "golang", "Org2", "Jim");
-    await chaincode.instantiateChaincode(["peer0.org1.example.com"], "mychannel", "mycc1", "1.0", "golang", "init", ["a", "100", "b", "200"], "Org1", "Tom", edsmplc);
-    // await chaincode.query(["peer0.org1.example.com", "peer1.org1.example.com"], 'mycc1', 'query', ['a'], 'mychannel', 'Org1', 'Tom');
-    // await chaincode.invokeChaincode(["peer0.org1.example.com", "peer0.org2.example.com"], "mycc1", "move", ["a", "b", "10"], "mychannel", "Org1", "Tom");
-    // 
+    // await chaincode.installChaincode(["peer0.org2.example.com", "peer1.org2.example.com"], "mycc1", "github.com/example_cc/go", "1.0", "golang", "Org2", "Jim");
+    // await chaincode.instantiateChaincode(["peer0.org1.example.com"], "mychannel", "mycc1", "1.0", "golang", "init", ["a", "100", "b", "200"], edsmplc1, "Org1", "Tom");
+    // await chaincode.installChaincode(["peer0.org1.example.com", "peer1.org1.example.com"], "mycc2", "github.com/example_cc/go", "1.0", "golang", "Org1", "Tom");
+    // await chaincode.installChaincode(["peer0.org2.example.com", "peer1.org2.example.com"], "mycc2", "github.com/example_cc/go", "1.0", "golang", "Org2", "Jim");
+    // await chaincode.instantiateChaincode(["peer0.org1.example.com"], "mychannel", "mycc2", "1.0", "golang", "init", ["a", "100", "b", "200"], edsmplc2, "Org1", "Tom");
+    // await chaincode.installChaincode(["peer0.org1.example.com", "peer1.org1.example.com"], "mycc3", "github.com/example_cc/go", "1.0", "golang", "Org1", "Tom");
+    // await chaincode.installChaincode(["peer0.org2.example.com", "peer1.org2.example.com"], "mycc3", "github.com/example_cc/go", "1.0", "golang", "Org2", "Jim");
+    // await chaincode.instantiateChaincode(["peer0.org1.example.com"], "mychannel", "mycc3", "1.0", "golang", "init", ["a", "100", "b", "200"], edsmplc3, "Org1", "Tom");
+
+    // let plan = await chaincode.test("mycc", "mychannel", "Org1", "Tom");
+    // console.log(plan.groups['G0'])
+
+    let plan = await chaincode.getChaincodeEndorsementPlan("peer0.org2.example.com", "mychannel", "mycc", "Org2", "Jim");
+    console.log(plan.groups['G1'])
+
+
+    // let invokeResponse = await chaincode.invokeChaincode(["peer0.org1.example.com"], "mycc", "move", ["a", "b", "10"], "mychannel", "Org1", "Tom");
+    // console.log("invokeResponse", invokeResponse)
+    // let queryResponse = await chaincode.query(["peer1.org2.example.com"], 'mycc', 'query', ['a'], 'mychannel', 'Org2', 'Jim');
+    // console.log("queryResponse", queryResponse)
+
+    // let queryResponse = await chaincode.query(["peer1.org1.example.com"], 'mycc1', 'query', ['a'], 'mychannel', 'Org1', 'Tom');
+    // console.log("queryResponse", queryResponse)
+    // let invokeResponse = await chaincode.invokeChaincode(null, "mycc1", "move", ["a", "b", "10"], "mychannel", "Org1", "Tom");
+    // console.log("invokeResponse", invokeResponse)
+
+
+
+
+
+
+
+
     // await peer.getChannelList("peer0.org1.example.com", "Org1", "Tom");
 
     // await channel.createChannel("anotherchannel", "../../fabric/channel-artifacts/anotherchannel.tx", "Org1");
@@ -154,7 +243,8 @@ async function start() {
 
 
     // await chaincode.instantiateChaincode(["peer0.org1.example.com"], "mychannel", "mycc", "1.0", "golang", "init", ["a", "100", "b", "200"], "Org1", "Tom", edsmplc);
-    // await chaincode.test("anotherchannel", "Org1", "Tom");
+
+    // await chaincode.test("mychannel", "Org1", "Tom");
 
     // await chaincode.installChaincode(["peer0.org1.example.com"], "javacc", "/src/github.com/java-fabric-chaincode-template", "1.0", "java", "Org1", "Tom");
     // await chaincode.instantiateChaincode(["peer0.org1.example.com"], "mychannel", "newcc", "1.0", "golang", "init", ["a", "b", "10"], "Org1", "Tom", edsmplc)

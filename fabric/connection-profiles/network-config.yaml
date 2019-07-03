@@ -70,10 +70,10 @@ channels:
         discover: true
 
       peer1.org1.example.com:
-        endorsingPeer: false
+        endorsingPeer: true
         chaincodeQuery: true
         ledgerQuery: true
-        eventSource: false
+        eventSource: true
         discover: true
 
       peer0.org2.example.com:
@@ -81,12 +81,13 @@ channels:
         chaincodeQuery: true
         ledgerQuery: true
         eventSource: true
+        discover: true
 
       peer1.org2.example.com:
-        endorsingPeer: false
+        endorsingPeer: true
         chaincodeQuery: true
         ledgerQuery: true
-        eventSource: false
+        eventSource: true
         discover: true
 
       # New peer
@@ -147,10 +148,10 @@ channels:
         eventSource: true
 
       peer1.org1.example.com:
-        endorsingPeer: false
+        endorsingPeer: true
         chaincodeQuery: true
         ledgerQuery: true
-        eventSource: false
+        eventSource: true
 
       peer0.org2.example.com:
         endorsingPeer: true
@@ -158,11 +159,11 @@ channels:
         ledgerQuery: true
         eventSource: true
 
-      # peer1.org2.example.com:
-      #   endorsingPeer: false
-      #   chaincodeQuery: true
-      #   ledgerQuery: true
-      #   eventSource: false
+      peer1.org2.example.com:
+        endorsingPeer: true
+        chaincodeQuery: true
+        ledgerQuery: true
+        eventSource: true
 # name of the channel
   testchannel:
     # Required. list of orderers designated by the application to use for transactions on this

@@ -6,7 +6,6 @@ var util = require('util');
 const helper = require('../utils/helper');
 const logger = require('../utils/common/logger').getLogger('services/chaincode');
 const preRes = require('../utils/common/pre-response');
-const proposalResponseHandler = require('../utils/common/proposal-response-handler');
 
 const channelService = require('./channel');
 
@@ -186,7 +185,7 @@ async function installChaincodeByPackage(peers, chaincodePackage, orgName, usern
  * @param {string} orgName 
  * @param {string} username 
  */
-async function instantiateChaincode(peers, channelName, chaincodeName, chaincodeVersion, chaincodeType, functionName, args, orgName, username, endorsementPolicy) {
+async function instantiateChaincode(peers, channelName, chaincodeName, chaincodeVersion, chaincodeType, functionName, args, endorsementPolicy, orgName, username) {
     /**
      * TODO:
      *  (1) Thiết lập instance của channel và kiểm tra thông tin
@@ -217,28 +216,7 @@ async function instantiateChaincode(peers, channelName, chaincodeName, chaincode
             chaincodeVersion: chaincodeVersion,
             txId: txId,
             args: args,
-            'endorsement-policy': {
-                identities: [{
-                        role: {
-                            name: 'member',
-                            mspId: 'Org1MSP'
-                        }
-                    },
-                    {
-                        role: {
-                            name: 'member',
-                            mspId: 'Org2MSP'
-                        }
-                    }
-                ],
-                policy: {
-                    '1-of': [{
-                        'signed-by': 0
-                    }, {
-                        'signed-by': 1
-                    }]
-                }
-            }
+            'endorsement-policy': endorsementPolicy
         };
 
         if (functionName) {
@@ -327,11 +305,15 @@ async function query(peers, chaincodeName, funtionName, args, channelName, orgNa
 
         // (3) Gửi request query chaincode
         let request = {
-            targets: peers,
             chaincodeId: chaincodeName,
             fcn: funtionName,
             args: args
         };
+
+        if (peers) {
+            request['targets'] = peers
+        }
+
         let queryResponse = await channel.queryByChaincode(request);
 
         if (queryResponse) {
@@ -404,12 +386,17 @@ async function invokeChaincode(peers, chaincodeName, functionName, args, channel
         let txId = client.newTransactionID();
 
         let request = {
-            targets: peers,
             chaincodeId: chaincodeName,
             txId: txId,
             fcn: functionName,
             args: args,
         }
+
+        if (peers) {
+            request['targets'] = peers
+        }
+
+        console.log(request);
 
         let results = await channel.sendTransactionProposal(request);
 
@@ -559,7 +546,7 @@ function eventHubHandler(eventHubs, orgName, txId) {
                 }, (err) => {
                     clearTimeout(eventTimeOut);
                     logger.error(err);
-                    rej(err);
+                    return;
                 }, {
                     unregister: true,
                     disconnect: true // tự động disconnect sau khi hoàn thành
@@ -573,15 +560,55 @@ function eventHubHandler(eventHubs, orgName, txId) {
     })
 }
 
-async function test(channelName, orgName, username) {
-
+/**
+ * Lấy endorsement plan trước khi thực hiện Invoke chaincode
+ * @param {*} peer 
+ * @param {*} channelName 
+ * @param {*} chaincodeName 
+ * @param {*} orgName 
+ * @param {*} username 
+ */
+async function getChaincodeEndorsementPlan(peer, channelName, chaincodeName, orgName, username) {
     try {
         // (1) Thiết lập instance của channel và kiểm tra thông tin
         var { client, channel } = await channelService._getClientWithChannel(channelName, orgName, username);
-        let orgs = channel.getOrganizations();
-        console.log(channel);
-    } catch (e) {
+        // default peer: peer0.org1.example.com
+        await channel.initialize({
+            target: peer,
+            discover: true,
+            asLocalhost: true,
+        });
 
+        let endorsementHint = { chaincodes: [{ name: chaincodeName }] }
+        let endorsementPlan = await channel.getEndorsementPlan(endorsementHint);
+        console.log("endorsementPlan", endorsementPlan);
+        return endorsementPlan;
+    } catch (e) {
+        console.log(e)
+    } finally {
+        if (channel) channel.close();
+    }
+}
+
+async function test(chaincodeName, channelName, orgName, username) {
+    try {
+        // (1) Thiết lập instance của channel và kiểm tra thông tin
+        var { client, channel } = await channelService._getClientWithChannel(channelName, orgName, username);
+        // default peer: peer0.org1.example.com
+        await channel.initialize({
+            target: "peer1.org1.example.com",
+            discover: true,
+            asLocalhost: true,
+        });
+
+        let endorsementHint = { chaincodes: [{ name: chaincodeName }] }
+        let endorsementPlan = await channel.getEndorsementPlan(endorsementHint);
+        console.log("endorsementPlan", endorsementPlan);
+        return endorsementPlan;
+    } catch (e) {
+        console.log(e)
+    } finally {
+        if (channel) channel.close();
     }
 }
 
@@ -592,4 +619,5 @@ exports.getInstalledChaincodes = getInstalledChaincodes;
 exports.getInstantiatedChaincodes = getInstantiatedChaincodes;
 exports.query = query;
 exports.invokeChaincode = invokeChaincode;
+exports.getChaincodeEndorsementPlan = getChaincodeEndorsementPlan;
 exports.test = test;
