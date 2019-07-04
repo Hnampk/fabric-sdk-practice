@@ -91,42 +91,6 @@ async function start() {
         }
     }
 
-    let edsmplc2 = {
-        identities: [{
-            role: {
-                name: 'member',
-                mspId: 'Org1MSP'
-            }
-        }],
-        policy: {
-            '1-of': [{
-                'signed-by': 0
-            }]
-        }
-    }
-
-    let edsmplc3 = {
-        identities: [{
-                role: {
-                    name: 'member',
-                    mspId: 'Org1MSP'
-                }
-            },
-            {
-                role: {
-                    name: 'member',
-                    mspId: 'Org2MSP'
-                }
-            }
-        ],
-        policy: {
-            "2-of": [
-                { "signed-by": 0 },
-                { "signed-by": 1 },
-            ]
-        }
-    }
-
     // await channel.createChannel("mychannel", "../../fabric/channel-artifacts/channel.tx", "Org1");
     // await user.getRegisteredUser("Tom", "Org1", true);
     // await user.getRegisteredUser("Jim", "Org2", true);
@@ -137,20 +101,15 @@ async function start() {
     // await chaincode.installChaincode(["peer0.org1.example.com", "peer1.org1.example.com"], "mycc", "github.com/example_cc/go", "1.0", "golang", "Org1", "Tom");
     // await chaincode.installChaincode(["peer0.org2.example.com", "peer1.org2.example.com"], "mycc", "github.com/example_cc/go", "1.0", "golang", "Org2", "Jim");
     // await chaincode.instantiateChaincode(["peer0.org1.example.com"], "mychannel", "mycc", "1.0", "golang", "init", ["a", "100", "b", "200"], edsmplc, "Org1", "Tom");
-    // await chaincode.installChaincode(["peer0.org1.example.com", "peer1.org1.example.com"], "mycc1", "github.com/example_cc/go", "1.0", "golang", "Org1", "Tom");
-    // await chaincode.installChaincode(["peer0.org2.example.com", "peer1.org2.example.com"], "mycc1", "github.com/example_cc/go", "1.0", "golang", "Org2", "Jim");
-    // await chaincode.instantiateChaincode(["peer0.org1.example.com"], "mychannel", "mycc1", "1.0", "golang", "init", ["a", "100", "b", "200"], edsmplc1, "Org1", "Tom");
-    // await chaincode.installChaincode(["peer0.org1.example.com", "peer1.org1.example.com"], "mycc2", "github.com/example_cc/go", "1.0", "golang", "Org1", "Tom");
-    // await chaincode.installChaincode(["peer0.org2.example.com", "peer1.org2.example.com"], "mycc2", "github.com/example_cc/go", "1.0", "golang", "Org2", "Jim");
-    // await chaincode.instantiateChaincode(["peer0.org1.example.com"], "mychannel", "mycc2", "1.0", "golang", "init", ["a", "100", "b", "200"], edsmplc2, "Org1", "Tom");
-    // await chaincode.installChaincode(["peer0.org1.example.com", "peer1.org1.example.com"], "mycc3", "github.com/example_cc/go", "1.0", "golang", "Org1", "Tom");
-    // await chaincode.installChaincode(["peer0.org2.example.com", "peer1.org2.example.com"], "mycc3", "github.com/example_cc/go", "1.0", "golang", "Org2", "Jim");
-    // await chaincode.instantiateChaincode(["peer0.org1.example.com"], "mychannel", "mycc3", "1.0", "golang", "init", ["a", "100", "b", "200"], edsmplc3, "Org1", "Tom");
 
     // let plan = await chaincode.test("mycc", "mychannel", "Org1", "Tom");
     // console.log(plan.groups['G0'])
 
-    let plan = await chaincode.getChaincodeEndorsementPlan("peer0.org1.example.com", "mychannel", "lscc", "Org2", "Jim");
+    // await chaincode.installChaincode(["peer0.org1.example.com", "peer1.org1.example.com"], "mycc", "github.com/example_cc/go", "2.0", "golang", "Org1", "Tom");
+    // await chaincode.installChaincode(["peer0.org2.example.com", "peer1.org2.example.com"], "mycc", "github.com/example_cc/go", "2.0", "golang", "Org2", "Jim");
+    // await chaincode.upgradeChaincode(["peer0.org1.example.com"], "mychannel", "mycc", "2.0", "golang", "init", ["a", "100", "b", "200"], edsmplc1, "Org1", "Tom");
+
+    let plan = await chaincode.getChaincodeEndorsementPlan("peer0.org1.example.com", "mychannel", "mycc", "Org2", "Jim");
     console.log(plan)
 
     // let invokeResponse = await chaincode.invokeChaincode(["peer1.org1.example.com"], "mycc", "move", ["a", "b", "10"], "mychannel", "Org1", "Tom");

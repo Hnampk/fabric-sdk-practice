@@ -181,6 +181,57 @@ router.post('/instantiate', async(req, res) => {
     res.json(result);
 });
 
+router.post('/upgrade', async(req, res) => {
+    logger.info('<<<<<<<<<<<<<<<<< U P G R A D E  C H A I N C O D E >>>>>>>>>>>>>>>>>');
+
+    var peers = req.body.peers;
+    var chaincodeName = req.body.chaincodeName;
+    var chaincodeVersion = req.body.chaincodeVersion;
+    var channelName = req.body.channel;
+    var chaincodeType = req.body.chaincodeType;
+    var fcn = req.body.fcn;
+    var args = req.body.args;
+    var endorsementPolicy = req.body.endorsementPolicy;
+
+    logger.debug('peers  : ' + peers);
+    logger.debug('channelName  : ' + channelName);
+    logger.debug('chaincodeName : ' + chaincodeName);
+    logger.debug('chaincodeVersion  : ' + chaincodeVersion);
+    logger.debug('chaincodeType  : ' + chaincodeType);
+    logger.debug('fcn  : ' + fcn);
+    logger.debug('args  : ' + args);
+    logger.debug('endorsementPolicy  : ' + JSON.stringify(endorsementPolicy));
+
+    if (!chaincodeName) {
+        res.json(preRes.getErrorMessage('\'chaincodeName\''));
+        return;
+    }
+    if (!chaincodeVersion) {
+        res.json(preRes.getErrorMessage('\'chaincodeVersion\''));
+        return;
+    }
+    if (!channelName) {
+        res.json(preRes.getErrorMessage('\'channel\''));
+        return;
+    }
+    if (!chaincodeType) {
+        res.json(preRes.getErrorMessage('\'chaincodeType\''));
+        return;
+    }
+    if (!args) {
+        res.json(preRes.getErrorMessage('\'args\''));
+        return;
+    }
+    if (!endorsementPolicy) {
+        res.json(preRes.getErrorMessage('\'endorsementPolicy\''));
+        return;
+    }
+
+    let result = await chaincode.upgradeChaincode(peers ? peers : null, channelName, chaincodeName, chaincodeVersion, chaincodeType, fcn, args, endorsementPolicy, req.orgname, req.username);
+    res.json(result);
+
+});
+
 router.post('/query', async(req, res) => {
     logger.info('<<<<<<<<<<<<<<<<< Q U E R Y  C H A I N C O D E >>>>>>>>>>>>>>>>>');
 
@@ -258,12 +309,10 @@ router.post('/install-by-package', async(req, res) => {
     upload(req, res, async(error) => {
         if (error instanceof multer.MulterError) {
             // A Multer error occurred when uploading.
-            console.log("A Multer error occurred when uploading.", error)
             res.json(preRes.getFailureResponse("A Multer error occurred when uploading."));
             return;
         } else if (error) {
             // An unknown error occurred when uploading.
-            console.log("An unknown error occurred when uploading.", error)
             res.json(preRes.getFailureResponse(error));
             return;
         }

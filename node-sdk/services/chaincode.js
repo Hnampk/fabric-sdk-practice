@@ -270,6 +270,79 @@ async function instantiateChaincode(peers, channelName, chaincodeName, chaincode
     }
 }
 
+async function upgradeChaincode(peers, channelName, chaincodeName, chaincodeVersion, chaincodeType, functionName, args, endorsementPolicy, orgName, username) {
+
+    logger.debug('\n\n============ upgrade chaincode on channel ' + channelName +
+        ' ============\n');
+
+    let errorMessage = null;
+
+    try {
+        // (1) Thiết lập instance của channel và kiểm tra thông tin
+        var { client, channel } = await channelService._getClientWithChannel(channelName, orgName, username);
+
+        // (2) Gửi yêu cầu đến các endorser
+        let txId = client.newTransactionID(true);
+        let request = {
+            targets: peers,
+            chaincodeType: chaincodeType,
+            chaincodeId: chaincodeName,
+            chaincodeVersion: chaincodeVersion,
+            txId: txId,
+            args: args,
+            'endorsement-policy': endorsementPolicy
+        };
+
+        if (functionName) {
+            request.fcn = functionName;
+        }
+
+        // Phản hồi nhận lại bao gồm tình hình cái đặt trên từng peer
+        // và proposal kèm chữ ký của các endorser
+        let results = await channel.sendUpgradeProposal(request, 60000);
+
+        // (3) Kiểm tra response
+        let proposalResponses = results[0]; // mảng các response của request trên từng peer yêu cầu
+        let allGood = true;
+
+        errorMessage = checkResponse(proposalResponses, "upgrade");
+
+        if (errorMessage) {
+            allGood = false;
+        }
+
+        // Các response hợp lệ
+        if (allGood) {
+            logger.info(util.format(
+                'Successfully sent Proposal and received ProposalResponse: Status - %s, message - "%s", metadata - "%s", endorsement signature: %s',
+                proposalResponses[0].response.status, proposalResponses[0].response.message,
+                proposalResponses[0].response.payload, proposalResponses[0].endorsement.signature));;
+
+            errorMessage = await onProposalProcess(results, channel, orgName, txId);
+        }
+    } catch (err) {
+        logger.error('Failed to send upgrade due to error: ' + err.stack ? err.stack : err);
+        errorMessage = err.toString();
+    } finally {
+        // (6) Close channel
+        if (channel) {
+            channel.close();
+        }
+    }
+
+    if (errorMessage) {
+        let message = util.format('Failed to upgrade the chaincode. cause:%s', errorMessage);
+        logger.error(message);
+
+        return preRes.getFailureResponse(message);
+    } else {
+        let message = util.format('Successfully upgrade chaincode in organization %s to the channel \'%s\'', orgName, channelName);
+        logger.info(message);
+
+        return preRes.getSuccessResponse(message);
+    }
+}
+
 /**
  * Query chaincode
  * @param {Array<string>} peers SDK hỗ trợ query multiple peers
@@ -290,19 +363,10 @@ async function query(peers, chaincodeName, funtionName, args, channelName, orgNa
      *  (4) Close channel
      */
 
-    let channel = null;
-
     try {
-        // (1) Thiết lập client của Org
-        let client = await helper.getClientForOrg(orgName, username);
 
-        // (2) Thiết lập instance của channel và kiểm tra thông tin
-        channel = client.getChannel(channelName);
-        if (!channel) {
-            let message = util.format('Channel %s was not defined in the connection profile', channelName);
-            logger.error(message);
-            throw new Error(message)
-        }
+        // (1) Thiết lập instance của channel và kiểm tra thông tin
+        var { client, channel } = await channelService._getClientWithChannel(channelName, orgName, username);
 
         // (3) Gửi request query chaincode
         let request = {
@@ -368,20 +432,11 @@ async function invokeChaincode(peers, chaincodeName, functionName, args, channel
      */
     logger.debug(util.format('\n============ invoke transaction on channel %s ============\n', channelName));
 
-    let channel = null;
     let errorMessage = "";
 
     try {
-        // (1) Thiết lập client của Org
-        let client = await helper.getClientForOrg(orgName, username);
-
-        // (2) Thiết lập instance của channel và kiểm tra thông tin
-        channel = client.getChannel(channelName);
-        if (!channel) {
-            let message = util.format('Channel %s was not defined in the connection profile', channelName);
-            logger.error(message);
-            throw new Error(message);
-        }
+        // (1) Thiết lập instance của channel và kiểm tra thông tin
+        var { client, channel } = await channelService._getClientWithChannel(channelName, orgName, username);
 
         // (3) Gửi request yêu cầu đến các endorser
         let txId = client.newTransactionID();
@@ -618,6 +673,7 @@ async function test(chaincodeName, channelName, orgName, username) {
 }
 
 exports.instantiateChaincode = instantiateChaincode;
+exports.upgradeChaincode = upgradeChaincode;
 exports.installChaincode = installChaincode;
 exports.installChaincodeByPackage = installChaincodeByPackage;
 exports.getInstalledChaincodes = getInstalledChaincodes;
