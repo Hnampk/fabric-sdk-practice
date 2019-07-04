@@ -150,13 +150,12 @@ async function start() {
     // let plan = await chaincode.test("mycc", "mychannel", "Org1", "Tom");
     // console.log(plan.groups['G0'])
 
-    let plan = await chaincode.getChaincodeEndorsementPlan("peer0.org2.example.com", "mychannel", "mycc", "Org2", "Jim");
-    console.log(plan.groups['G1'])
+    let plan = await chaincode.getChaincodeEndorsementPlan("peer0.org1.example.com", "mychannel", "lscc", "Org2", "Jim");
+    console.log(plan)
 
-
-    // let invokeResponse = await chaincode.invokeChaincode(["peer0.org1.example.com"], "mycc", "move", ["a", "b", "10"], "mychannel", "Org1", "Tom");
+    // let invokeResponse = await chaincode.invokeChaincode(["peer1.org1.example.com"], "mycc", "move", ["a", "b", "10"], "mychannel", "Org1", "Tom");
     // console.log("invokeResponse", invokeResponse)
-    // let queryResponse = await chaincode.query(["peer1.org2.example.com"], 'mycc', 'query', ['a'], 'mychannel', 'Org2', 'Jim');
+    // let queryResponse = await chaincode.query(["peer1.org1.example.com"], 'mycc', 'query', ['a'], 'mychannel', 'Org2', 'Jim');
     // console.log("queryResponse", queryResponse)
 
     // let queryResponse = await chaincode.query(["peer1.org1.example.com"], 'mycc1', 'query', ['a'], 'mychannel', 'Org1', 'Tom');

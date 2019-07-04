@@ -182,6 +182,7 @@ async function installChaincodeByPackage(peers, chaincodePackage, orgName, usern
  * @param {string} chaincodeType  e.g. 'node', 'golang', 'java'
  * @param {string} functionName bỏ trống, null hoặc 'init'
  * @param {Array<string>} args danh sách các state khởi tạo
+ * @param {} endorsementPolicy https://fabric-sdk-node.github.io/release-1.4/global.html#ChaincodeInstantiateUpgradeRequest
  * @param {string} orgName 
  * @param {string} username 
  */
@@ -562,11 +563,11 @@ function eventHubHandler(eventHubs, orgName, txId) {
 
 /**
  * Lấy endorsement plan trước khi thực hiện Invoke chaincode
- * @param {*} peer 
- * @param {*} channelName 
- * @param {*} chaincodeName 
- * @param {*} orgName 
- * @param {*} username 
+ * @param {string} peer 
+ * @param {string} channelName 
+ * @param {string} chaincodeName 
+ * @param {string} orgName 
+ * @param {string} username 
  */
 async function getChaincodeEndorsementPlan(peer, channelName, chaincodeName, orgName, username) {
     try {
@@ -581,10 +582,14 @@ async function getChaincodeEndorsementPlan(peer, channelName, chaincodeName, org
 
         let endorsementHint = { chaincodes: [{ name: chaincodeName }] }
         let endorsementPlan = await channel.getEndorsementPlan(endorsementHint);
-        console.log("endorsementPlan", endorsementPlan);
-        return endorsementPlan;
+
+        if (endorsementPlan) {
+            return preRes.getSuccessResponse("Successfully get endorsement plan for chaincode " + chaincodeName, endorsementPlan);
+        } else {
+            return preRes.getFailureResponse("Problem occurred! Make sure that peers are running and chaincode \"" + chaincodeName + "\" is installed on needed peers!");
+        }
     } catch (e) {
-        console.log(e)
+        return preRes.getFailureResponse(e.toString());
     } finally {
         if (channel) channel.close();
     }

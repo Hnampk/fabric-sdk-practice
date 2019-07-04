@@ -149,14 +149,12 @@ async function registerEventHub(channelName, orgName, username) {
 
             if (eventHubs.length > 0) {
                 let blockRegistrationNumber = blockRegistrationNumbers.get(channelName);
-                console.log("blockRegistrationNumber", blockRegistrationNumber)
 
                 // (3) Kiểm tra tình trạng đăng ký của event hub
                 if (!blockRegistrationNumber) {
                     let eh = eventHubs[0];
 
-                    console.log("not blockRegistrationNumber")
-                        // (4) Đăng ký event hub
+                    // (4) Đăng ký event hub
                     blockRegistrationNumber = eh.registerBlockEvent((block => {
                         io.in('channel-blocks-' + channelName).emit('block', { channelName, block });
                     }), (e => {

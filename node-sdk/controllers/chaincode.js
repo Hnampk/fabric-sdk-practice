@@ -150,7 +150,7 @@ router.post('/instantiate', async(req, res) => {
     logger.debug('chaincodeType  : ' + chaincodeType);
     logger.debug('fcn  : ' + fcn);
     logger.debug('args  : ' + args);
-    logger.debug('args  : ' + endorsementPolicy);
+    logger.debug('endorsementPolicy  : ' + JSON.stringify(endorsementPolicy));
 
     if (!chaincodeName) {
         res.json(preRes.getErrorMessage('\'chaincodeName\''));
@@ -223,8 +223,23 @@ router.post('/invoke', async(req, res) => {
     logger.debug('fcn  : ' + fcn);
     logger.debug('args  : ' + args);
 
+    if (!channelName) {
+        res.json(preRes.getErrorMessage('\'channel\''));
+        return;
+    }
+
     if (!chaincodeName) {
         res.json(preRes.getErrorMessage('\'chaincodeName\''));
+        return;
+    }
+
+    if (!peers) {
+        res.json(preRes.getErrorMessage('\'peers\''));
+        return;
+    }
+
+    if (!fcn) {
+        res.json(preRes.getErrorMessage('\'fcn\''));
         return;
     }
 
@@ -311,13 +326,48 @@ router.post('/install-by-package', async(req, res) => {
         let result = await chaincode.installChaincode([peer], chaincodeName, chaincodePath, chaincodeVersion, chaincodeType, req.orgname, req.username);
 
         // Remove chaincode folder after installation
-        rimraf(path.join(__dirname, '../../fabric/src/viettel.com/', chaincodeName), (e) => {
-            console.log(e);
-        });
+        setTimeout(() => {
+            rimraf(path.join(__dirname, '../../fabric/src/viettel.com/', chaincodeName), (e) => {
+                console.log(e);
+            });
+        }, 2000);
 
         res.json(result);
         // Everything went fine.
     })
 });
+
+router.get('/endorsement-plan', async(req, res) => {
+    logger.info('<<<<<<<<<<<<<<<<< G E T  E N D O R S E M E N T  P L A N >>>>>>>>>>>>>>>>>');
+
+    var peer = req.query.peer;
+    var channelName = req.query.channel;
+    var chaincodeName = req.query.chaincodeName;
+
+    logger.debug('peer : ' + peer);
+    logger.debug('channelName : ' + channelName);
+    logger.debug('chaincodeName : ' + chaincodeName);
+    logger.debug('username :' + req.username);
+    logger.debug('orgname:' + req.orgname);
+
+    if (!channelName) {
+        res.json(preRes.getErrorMessage('\'channel\''));
+        return;
+    }
+
+    if (!peer) {
+        res.json(preRes.getErrorMessage('\'peer\''));
+        return;
+    }
+
+    if (!chaincodeName) {
+        res.json(preRes.getErrorMessage('\'chaincodeName\''));
+        return;
+    }
+
+    let result = await chaincode.getChaincodeEndorsementPlan(peer, channelName, chaincodeName, req.orgname, req.username);
+    res.json(result);
+});
+
 
 module.exports = router;
