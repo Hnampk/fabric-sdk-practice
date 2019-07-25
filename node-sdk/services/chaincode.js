@@ -245,7 +245,7 @@ async function instantiateChaincode(peers, channelName, chaincodeName, chaincode
                 proposalResponses[0].response.status, proposalResponses[0].response.message,
                 proposalResponses[0].response.payload, proposalResponses[0].endorsement.signature));;
 
-            errorMessage = await onProposalProcess(results, channel, orgName, txId);
+            errorMessage = await onProposalProcess(results, channel, orgName, txId, "instantiate");
         }
     } catch (err) {
         logger.error('Failed to send instantiate due to error: ' + err.stack ? err.stack : err);
@@ -318,7 +318,7 @@ async function upgradeChaincode(peers, channelName, chaincodeName, chaincodeVers
                 proposalResponses[0].response.status, proposalResponses[0].response.message,
                 proposalResponses[0].response.payload, proposalResponses[0].endorsement.signature));;
 
-            errorMessage = await onProposalProcess(results, channel, orgName, txId);
+            errorMessage = await onProposalProcess(results, channel, orgName, txId, "upgrade");
         }
     } catch (err) {
         logger.error('Failed to send upgrade due to error: ' + err.stack ? err.stack : err);
@@ -460,7 +460,7 @@ async function invokeChaincode(peers, chaincodeName, functionName, args, channel
         let proposalResponses = results[0];
         let allGood = true;
 
-        errorMessage = checkResponse(proposalResponses, "instantiate");
+        errorMessage = checkResponse(proposalResponses, "invoke");
 
         if (errorMessage) {
             allGood = false;
@@ -472,7 +472,7 @@ async function invokeChaincode(peers, chaincodeName, functionName, args, channel
                 proposalResponses[0].response.status, proposalResponses[0].response.message,
                 proposalResponses[0].response.payload, proposalResponses[0].endorsement.signature));
 
-            errorMessage = await onProposalProcess(results, channel, orgName, txId);
+            errorMessage = await onProposalProcess(results, channel, orgName, txId, "upgrade");
 
             if (!errorMessage) {
                 return preRes.getSuccessResponse("The invoke chaincode transaction was valid");
@@ -512,14 +512,14 @@ function checkResponse(proposalResponses, type) {
     return errorMessage;
 }
 
-async function onProposalProcess(results, channel, orgName, txId) {
+async function onProposalProcess(results, channel, orgName, txId, type) {
     let proposalResponses = results[0];
     let promises = [];
     let errorMessage = "";
     // Danh sách các ChannelEventHub của org hiện tại
     let eventHubs = channel.getChannelEventHubsForOrg();
 
-    promises = await eventHubHandler(eventHubs, orgName, txId);
+    promises = await eventHubHandler(eventHubs, orgName, txId, type);
 
 
     // (6) Thực hiện gửi proposal đến orderer
@@ -567,7 +567,7 @@ async function onProposalProcess(results, channel, orgName, txId) {
  * @param {*} orgName 
  * @param {*} txId 
  */
-function eventHubHandler(eventHubs, orgName, txId) {
+function eventHubHandler(eventHubs, orgName, txId, type) {
     return new Promise((res, rej) => {
 
         let promises = [];
@@ -575,7 +575,7 @@ function eventHubHandler(eventHubs, orgName, txId) {
 
         eventHubs.forEach(eh => {
             let instanceEventPromise = new Promise((res, rej) => {
-                logger.debug('instantiateEventPromise - setting up event');
+                logger.debug(type + 'EventPromise - setting up event');
 
                 let eventTimeOut = setTimeout(() => {
                     let message = 'REQUEST_TIMEOUT:' + eh.getPeerAddr();
@@ -584,18 +584,18 @@ function eventHubHandler(eventHubs, orgName, txId) {
                 }, 60000);
 
                 eh.registerTxEvent(txId.getTransactionID(), (tx, code, blockNum) => {
-                    logger.info('The chaincode instantiate transaction has been committed on peer %s', eh.getPeerAddr());
+                    logger.info('The chaincode ' + type + ' transaction has been committed on peer %s', eh.getPeerAddr());
                     logger.info('Transaction %s has status of %s in block %s', tx, code, blockNum);
 
                     clearTimeout(eventTimeOut);
 
                     // Kiểm tra trạng thái của tx
                     if (code !== 'VALID') {
-                        let message = util.format('The chaincode instantiate transaction was invalid, code:%s', code);
+                        let message = util.format('The chaincode ' + type + ' transaction was invalid, code:%s', code);
                         logger.error(message);
                         rej(new Error(message));
                     } else {
-                        let message = 'The chaincode instantiate transaction was valid.';
+                        let message = 'The chaincode ' + type + ' transaction was valid.';
                         logger.info(message);
                         res(message);
                     }
